@@ -4,6 +4,7 @@ include(thirdparty/thirdparty.pri)
 
 HEADERS += \
     $$PWD/telegramclient.h \
+    $$PWD/apivalues.default.h \
     $$PWD/apivalues.h
 
 SOURCES += \
