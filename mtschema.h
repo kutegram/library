@@ -5,57 +5,59 @@
 
 #include "telegramstream.h"
 
-enum MTType
+namespace MTType {
+enum Types
 {
-    MTVector = 481674261,
-    MTResPQ = 85337187,
-    MTPQInnerDataDc = -1443537003,
-    MTPQInnerDataTempDc = 1459478408,
-    MTServerDHParamsOk = -790100132,
-    MTServerDHInnerData = -1249309254,
-    MTClientDHInnerData = 1715713620,
-    MTDhGenOk = 1003222836,
-    MTDhGenRetry = 1188831161,
-    MTDhGenFail = -1499615742,
-    MTBindAuthKeyInner = 1973679973,
-    MTRpcResult = -212046591,
-    MTRpcError = 558156313,
-    MTRpcAnswerUnknown = 1579864942,
-    MTRpcAnswerDroppedRunning = -847714938,
-    MTRpcAnswerDropped = -1539647305,
-    MTFutureSalt = 155834844,
-    MTFutureSalts = -1370486635,
-    MTPong = 880243653,
-    MTDestroySessionOk = -501201412,
-    MTDestroySessionNone = 1658015945,
-    MTNewSessionCreated = -1631450872,
-    MTMsgContainer = 1945237724,
-    MTMessage = 1538843921,
-    MTMsgCopy = -530561358,
-    MTGzipPacked = 812830625,
-    MTMsgsAck = 1658238041,
-    MTBadMsgNotification = -1477445615,
-    MTBadServerSalt = -307542917,
-    MTMsgResendReq = 2105940488,
-    MTMsgsStateReq = -630588590,
-    MTMsgsStateInfo = 81704317,
-    MTMsgsAllInfo = -1933520591,
-    MTMsgDetailedInfo = 661470918,
-    MTMsgNewDetailedInfo = -2137147681,
-    MTDestroyAuthKeyOk = -161422892,
-    MTDestroyAuthKeyNone = 178201177,
-    MTDestroyAuthKeyFail = -368010477,
-    MTReqPqMulti = -1099002127,
-    MTReqDHParams = -686627650,
-    MTSetClientDHParams = -184262881,
-    MTRpcDropAnswer = 1491380032,
-    MTGetFutureSalts = -1188971260,
-    MTPing = 2059302892,
-    MTPingDelayDisconnect = -213746804,
-    MTDestroySession = -414113498,
-    MTHttpWait = -1835453025,
-    MTDestroyAuthKey = -784117408,
+    Vector = 481674261,
+    ResPQ = 85337187,
+    PQInnerDataDc = -1443537003,
+    PQInnerDataTempDc = 1459478408,
+    ServerDHParamsOk = -790100132,
+    ServerDHInnerData = -1249309254,
+    ClientDHInnerData = 1715713620,
+    DhGenOk = 1003222836,
+    DhGenRetry = 1188831161,
+    DhGenFail = -1499615742,
+    BindAuthKeyInner = 1973679973,
+    RpcResult = -212046591,
+    RpcError = 558156313,
+    RpcAnswerUnknown = 1579864942,
+    RpcAnswerDroppedRunning = -847714938,
+    RpcAnswerDropped = -1539647305,
+    FutureSalt = 155834844,
+    FutureSalts = -1370486635,
+    Pong = 880243653,
+    DestroySessionOk = -501201412,
+    DestroySessionNone = 1658015945,
+    NewSessionCreated = -1631450872,
+    MsgContainer = 1945237724,
+    Message = 1538843921,
+    MsgCopy = -530561358,
+    GzipPacked = 812830625,
+    MsgsAck = 1658238041,
+    BadMsgNotification = -1477445615,
+    BadServerSalt = -307542917,
+    MsgResendReq = 2105940488,
+    MsgsStateReq = -630588590,
+    MsgsStateInfo = 81704317,
+    MsgsAllInfo = -1933520591,
+    MsgDetailedInfo = 661470918,
+    MsgNewDetailedInfo = -2137147681,
+    DestroyAuthKeyOk = -161422892,
+    DestroyAuthKeyNone = 178201177,
+    DestroyAuthKeyFail = -368010477,
+    ReqPqMultiMethod = -1099002127,
+    ReqDHParamsMethod = -686627650,
+    SetClientDHParamsMethod = -184262881,
+    RpcDropAnswerMethod = 1491380032,
+    GetFutureSaltsMethod = -1188971260,
+    PingMethod = 2059302892,
+    PingDelayDisconnectMethod = -213746804,
+    DestroySessionMethod = -414113498,
+    HttpWaitMethod = -1835453025,
+    DestroyAuthKeyMethod = -784117408,
 };
+}
 
 void readMTVector(TelegramStream &stream, QVariant &i);
 void writeMTVector(TelegramStream &stream, QVariant i);
@@ -113,6 +115,27 @@ void readMTMsgDetailedInfo(TelegramStream &stream, QVariant &i);
 void writeMTMsgDetailedInfo(TelegramStream &stream, QVariant i);
 void readMTDestroyAuthKeyRes(TelegramStream &stream, QVariant &i);
 void writeMTDestroyAuthKeyRes(TelegramStream &stream, QVariant i);
+
+void readMTMethodReqPqMulti(TelegramStream &stream, QVariant &i);
+void writeMTMethodReqPqMulti(TelegramStream &stream, QVariant i);
+void readMTMethodReqDHParams(TelegramStream &stream, QVariant &i);
+void writeMTMethodReqDHParams(TelegramStream &stream, QVariant i);
+void readMTMethodSetClientDHParams(TelegramStream &stream, QVariant &i);
+void writeMTMethodSetClientDHParams(TelegramStream &stream, QVariant i);
+void readMTMethodRpcDropAnswer(TelegramStream &stream, QVariant &i);
+void writeMTMethodRpcDropAnswer(TelegramStream &stream, QVariant i);
+void readMTMethodGetFutureSalts(TelegramStream &stream, QVariant &i);
+void writeMTMethodGetFutureSalts(TelegramStream &stream, QVariant i);
+void readMTMethodPing(TelegramStream &stream, QVariant &i);
+void writeMTMethodPing(TelegramStream &stream, QVariant i);
+void readMTMethodPingDelayDisconnect(TelegramStream &stream, QVariant &i);
+void writeMTMethodPingDelayDisconnect(TelegramStream &stream, QVariant i);
+void readMTMethodDestroySession(TelegramStream &stream, QVariant &i);
+void writeMTMethodDestroySession(TelegramStream &stream, QVariant i);
+void readMTMethodHttpWait(TelegramStream &stream, QVariant &i);
+void writeMTMethodHttpWait(TelegramStream &stream, QVariant i);
+void readMTMethodDestroyAuthKey(TelegramStream &stream, QVariant &i);
+void writeMTMethodDestroyAuthKey(TelegramStream &stream, QVariant i);
 
 #endif //MTSCHEMA_H
 

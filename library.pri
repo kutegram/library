@@ -10,10 +10,12 @@ HEADERS += \
     $$PWD/apivalues.h \
     $$PWD/telegramstream.h \
     $$PWD/telegramsession.h \
-    $$PWD/mtschema.h
+    $$PWD/mtschema.h \
+    $$PWD/crypto.h
 
 SOURCES += \
     $$PWD/telegramclient.cpp \
     $$PWD/telegramstream.cpp \
     $$PWD/telegramsession.cpp \
-    $$PWD/mtschema.cpp
+    $$PWD/mtschema.cpp \
+    $$PWD/crypto.cpp

@@ -1,9 +1,6 @@
 #ifndef TELEGRAMCLIENT_H
 #define TELEGRAMCLIENT_H
 
-#define DC_IP "149.154.167.40" //"149.154.167.50" - production
-#define DC_PORT 443
-
 #include <QObject>
 #include "apivalues.h"
 #include "telegramsession.h"
@@ -17,8 +14,21 @@ private:
     TelegramSession *session;
     QTcpSocket *socket;
     TelegramStream *stream;
+
+    QByteArray nonce;
+    QByteArray newNonce;
+    QByteArray serverNonce;
+
+    void sendPlainPacket(QByteArray raw);
+    void sendMessage(QByteArray raw);
+    QByteArray readMessage();
+    void handleMessage(QByteArray messageData);
 public:
     explicit TelegramClient(QObject *parent = 0);
+
+    void handleResPQ(QByteArray data);
+signals:
+    void handleResponse(QByteArray data, qint32 conId);
 public slots:
     void start();
     void stop();

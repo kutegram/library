@@ -894,3 +894,232 @@ void writeMTDestroyAuthKeyRes(TelegramStream &stream, QVariant i)
     }
 }
 
+void readMTMethodReqPqMulti(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -1099002127:
+    readMTResPQ(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodReqPqMulti(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -1099002127:
+        writeInt32(stream, obj["id"]);
+        writeInt128(stream, obj["nonce"]);
+    break;
+    }
+}
+
+void readMTMethodReqDHParams(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -686627650:
+    readMTServerDHParams(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodReqDHParams(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -686627650:
+        writeInt32(stream, obj["id"]);
+        writeInt128(stream, obj["nonce"]);
+        writeInt128(stream, obj["server_nonce"]);
+        writeByteArray(stream, obj["p"]);
+        writeByteArray(stream, obj["q"]);
+        writeInt64(stream, obj["public_key_fingerprint"]);
+        writeByteArray(stream, obj["encrypted_data"]);
+    break;
+    }
+}
+
+void readMTMethodSetClientDHParams(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -184262881:
+    readMTSetClientDHParamsAnswer(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodSetClientDHParams(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -184262881:
+        writeInt32(stream, obj["id"]);
+        writeInt128(stream, obj["nonce"]);
+        writeInt128(stream, obj["server_nonce"]);
+        writeByteArray(stream, obj["encrypted_data"]);
+    break;
+    }
+}
+
+void readMTMethodRpcDropAnswer(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case 1491380032:
+    readMTRpcDropAnswer(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodRpcDropAnswer(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case 1491380032:
+        writeInt32(stream, obj["id"]);
+        writeInt64(stream, obj["req_msg_id"]);
+    break;
+    }
+}
+
+void readMTMethodGetFutureSalts(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -1188971260:
+    readMTFutureSalts(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodGetFutureSalts(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -1188971260:
+        writeInt32(stream, obj["id"]);
+        writeInt32(stream, obj["num"]);
+    break;
+    }
+}
+
+void readMTMethodPing(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case 2059302892:
+    readMTPong(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodPing(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case 2059302892:
+        writeInt32(stream, obj["id"]);
+        writeInt64(stream, obj["ping_id"]);
+    break;
+    }
+}
+
+void readMTMethodPingDelayDisconnect(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -213746804:
+    readMTPong(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodPingDelayDisconnect(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -213746804:
+        writeInt32(stream, obj["id"]);
+        writeInt64(stream, obj["ping_id"]);
+        writeInt32(stream, obj["disconnect_delay"]);
+    break;
+    }
+}
+
+void readMTMethodDestroySession(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -414113498:
+    readMTDestroySessionRes(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodDestroySession(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -414113498:
+        writeInt32(stream, obj["id"]);
+        writeInt64(stream, obj["session_id"]);
+    break;
+    }
+}
+
+void readMTMethodHttpWait(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -1835453025:
+    //Unsupported. (httpwait)
+    break;
+    }
+}
+
+void writeMTMethodHttpWait(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -1835453025:
+        writeInt32(stream, obj["id"]);
+        writeInt32(stream, obj["max_delay"]);
+        writeInt32(stream, obj["wait_after"]);
+        writeInt32(stream, obj["max_wait"]);
+    break;
+    }
+}
+
+void readMTMethodDestroyAuthKey(TelegramStream &stream, QVariant &i)
+{
+    QVariant conId;
+    readInt32(stream, conId);
+    switch (conId.toInt()) {
+    case -784117408:
+    readMTDestroyAuthKeyRes(stream, i);
+    break;
+    }
+}
+
+void writeMTMethodDestroyAuthKey(TelegramStream &stream, QVariant i)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["id"].toInt()) {
+    case -784117408:
+        writeInt32(stream, obj["id"]);
+    break;
+    }
+}
+
