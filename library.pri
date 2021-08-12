@@ -9,9 +9,11 @@ HEADERS += \
     $$PWD/apivalues.default.h \
     $$PWD/apivalues.h \
     $$PWD/telegramstream.h \
-    $$PWD/telegramsession.h
+    $$PWD/telegramsession.h \
+    $$PWD/mtschema.h
 
 SOURCES += \
     $$PWD/telegramclient.cpp \
     $$PWD/telegramstream.cpp \
-    $$PWD/telegramsession.cpp
+    $$PWD/telegramsession.cpp \
+    $$PWD/mtschema.cpp
