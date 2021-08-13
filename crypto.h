@@ -30,6 +30,6 @@ QByteArray encryptAES256IGE(QByteArray data, QByteArray iv, QByteArray key);
 QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp);
 QByteArray hashSHA256(QByteArray dataToHash);
 QByteArray hashSHA1(QByteArray dataToHash);
-void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i);
+void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback = 0);
 
 #endif // CRYPTO_H

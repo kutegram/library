@@ -178,21 +178,21 @@ QByteArray hashSHA1(QByteArray dataToHash)
     return QCryptographicHash::hash(dataToHash, QCryptographicHash::Sha1);
 }
 
-void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i)
+void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["id"].toInt()) {
     case PQINNERDATA_ID:
-        writeInt32(stream, obj["id"]);
-        writeByteArray(stream, obj["pq"]);
-        writeByteArray(stream, obj["p"]);
-        writeByteArray(stream, obj["q"]);
-        writeInt128(stream, obj["nonce"]);
-        writeInt128(stream, obj["server_nonce"]);
-        writeInt256(stream, obj["new_nonce"]);
+        writeInt32(stream, obj["id"], callback);
+        writeByteArray(stream, obj["pq"], callback);
+        writeByteArray(stream, obj["p"], callback);
+        writeByteArray(stream, obj["q"], callback);
+        writeInt128(stream, obj["nonce"], callback);
+        writeInt128(stream, obj["server_nonce"], callback);
+        writeInt256(stream, obj["new_nonce"], callback);
     break;
     default:
-        writeMTPQInnerData(stream, i);
+        writeMTPQInnerData(stream, i, callback);
     break;
     }
 }

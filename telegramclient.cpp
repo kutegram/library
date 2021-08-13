@@ -15,7 +15,7 @@ typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
 QMap<qint32, HANDLE_METHOD> getHandleMap()
 {
     QMap<qint32, HANDLE_METHOD> map;
-    map.insert(MTType::ResPQ, &TelegramClient::handleResPQ);
+    map[MTType::ResPQ] = &TelegramClient::handleResPQ;
     return map;
 }
 
@@ -182,7 +182,7 @@ QByteArray TelegramClient::readMessage()
     qint32 length = var.toInt();
     if (length >= 127) {
         readUInt8(*stream, var);
-        length += var.toInt();
+        length = var.toInt();
         readUInt8(*stream, var);
         length += (var.toInt() << 8);
         readUInt8(*stream, var);
