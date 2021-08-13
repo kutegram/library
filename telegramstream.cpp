@@ -41,6 +41,7 @@ void TelegramStream::readRawBytes(QByteArray &i, qint32 count)
     i.reserve(count);
     qint32 readedTotal = 0;
     while (count > 0) {
+        //TODO: leave if no data for long time
         qint32 readed = stream->readRawData(i.data() + readedTotal, count);
         if (readed == -1) break;
         else {
@@ -211,7 +212,7 @@ void readByteArray(TelegramStream &stream, QVariant &i, void *callback)
     qint32 length = var.toInt();
     if (length >= 254) {
         readUInt8(stream, var, callback);
-        length += var.toInt();
+        length = var.toInt();
         readUInt8(stream, var, callback);
         length += (var.toInt() << 8);
         readUInt8(stream, var, callback);

@@ -9,7 +9,7 @@ void readMTVector(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 481674261:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
     break;
     }
     i = obj;
@@ -18,9 +18,9 @@ void readMTVector(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTVector(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 481674261:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     }
 }
@@ -32,7 +32,7 @@ void readMTResPQ(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 85337187:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readByteArray(stream, obj["pq"], callback);
@@ -45,9 +45,9 @@ void readMTResPQ(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTResPQ(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 85337187:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeByteArray(stream, obj["pq"], callback);
@@ -63,7 +63,7 @@ void readMTPQInnerData(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1443537003:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readByteArray(stream, obj["pq"], callback);
         readByteArray(stream, obj["p"], callback);
         readByteArray(stream, obj["q"], callback);
@@ -73,7 +73,7 @@ void readMTPQInnerData(TelegramStream &stream, QVariant &i, void* callback)
         readInt32(stream, obj["dc"], callback);
     break;
     case 1459478408:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readByteArray(stream, obj["pq"], callback);
         readByteArray(stream, obj["p"], callback);
         readByteArray(stream, obj["q"], callback);
@@ -90,9 +90,9 @@ void readMTPQInnerData(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTPQInnerData(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1443537003:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeByteArray(stream, obj["pq"], callback);
         writeByteArray(stream, obj["p"], callback);
         writeByteArray(stream, obj["q"], callback);
@@ -102,7 +102,7 @@ void writeMTPQInnerData(TelegramStream &stream, QVariant i, void* callback)
         writeInt32(stream, obj["dc"], callback);
     break;
     case 1459478408:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeByteArray(stream, obj["pq"], callback);
         writeByteArray(stream, obj["p"], callback);
         writeByteArray(stream, obj["q"], callback);
@@ -122,7 +122,7 @@ void readMTServerDHParams(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -790100132:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readByteArray(stream, obj["encrypted_answer"], callback);
@@ -134,9 +134,9 @@ void readMTServerDHParams(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTServerDHParams(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -790100132:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeByteArray(stream, obj["encrypted_answer"], callback);
@@ -151,7 +151,7 @@ void readMTServerDHInnerData(TelegramStream &stream, QVariant &i, void* callback
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1249309254:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readInt32(stream, obj["g"], callback);
@@ -166,9 +166,9 @@ void readMTServerDHInnerData(TelegramStream &stream, QVariant &i, void* callback
 void writeMTServerDHInnerData(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1249309254:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeInt32(stream, obj["g"], callback);
@@ -186,7 +186,7 @@ void readMTClientDHInnerData(TelegramStream &stream, QVariant &i, void* callback
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1715713620:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readInt64(stream, obj["retry_id"], callback);
@@ -199,9 +199,9 @@ void readMTClientDHInnerData(TelegramStream &stream, QVariant &i, void* callback
 void writeMTClientDHInnerData(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1715713620:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeInt64(stream, obj["retry_id"], callback);
@@ -217,19 +217,19 @@ void readMTSetClientDHParamsAnswer(TelegramStream &stream, QVariant &i, void* ca
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1003222836:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readInt128(stream, obj["new_nonce_hash1"], callback);
     break;
     case 1188831161:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readInt128(stream, obj["new_nonce_hash2"], callback);
     break;
     case -1499615742:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt128(stream, obj["nonce"], callback);
         readInt128(stream, obj["server_nonce"], callback);
         readInt128(stream, obj["new_nonce_hash3"], callback);
@@ -241,21 +241,21 @@ void readMTSetClientDHParamsAnswer(TelegramStream &stream, QVariant &i, void* ca
 void writeMTSetClientDHParamsAnswer(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1003222836:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeInt128(stream, obj["new_nonce_hash1"], callback);
     break;
     case 1188831161:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeInt128(stream, obj["new_nonce_hash2"], callback);
     break;
     case -1499615742:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeInt128(stream, obj["new_nonce_hash3"], callback);
@@ -270,7 +270,7 @@ void readMTBindAuthKeyInner(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1973679973:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["nonce"], callback);
         readInt64(stream, obj["temp_auth_key_id"], callback);
         readInt64(stream, obj["perm_auth_key_id"], callback);
@@ -284,9 +284,9 @@ void readMTBindAuthKeyInner(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTBindAuthKeyInner(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1973679973:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["nonce"], callback);
         writeInt64(stream, obj["temp_auth_key_id"], callback);
         writeInt64(stream, obj["perm_auth_key_id"], callback);
@@ -303,7 +303,7 @@ void readMTRpcResult(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -212046591:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["req_msg_id"], callback);
         //Unsupported. (x, !x, object)
     break;
@@ -314,9 +314,9 @@ void readMTRpcResult(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTRpcResult(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -212046591:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["req_msg_id"], callback);
         //Unsupported. (x, !x, object)
     break;
@@ -330,7 +330,7 @@ void readMTRpcError(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 558156313:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt32(stream, obj["error_code"], callback);
         readString(stream, obj["error_message"], callback);
     break;
@@ -341,9 +341,9 @@ void readMTRpcError(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTRpcError(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 558156313:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt32(stream, obj["error_code"], callback);
         writeString(stream, obj["error_message"], callback);
     break;
@@ -357,13 +357,13 @@ void readMTRpcDropAnswer(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1579864942:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
     break;
     case -847714938:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
     break;
     case -1539647305:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["msg_id"], callback);
         readInt32(stream, obj["seq_no"], callback);
         readInt32(stream, obj["bytes"], callback);
@@ -375,15 +375,15 @@ void readMTRpcDropAnswer(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTRpcDropAnswer(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1579864942:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     case -847714938:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     case -1539647305:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["msg_id"], callback);
         writeInt32(stream, obj["seq_no"], callback);
         writeInt32(stream, obj["bytes"], callback);
@@ -398,7 +398,7 @@ void readMTFutureSalt(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 155834844:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt32(stream, obj["valid_since"], callback);
         readInt32(stream, obj["valid_until"], callback);
         readInt64(stream, obj["salt"], callback);
@@ -410,9 +410,9 @@ void readMTFutureSalt(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTFutureSalt(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 155834844:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt32(stream, obj["valid_since"], callback);
         writeInt32(stream, obj["valid_until"], callback);
         writeInt64(stream, obj["salt"], callback);
@@ -427,7 +427,7 @@ void readMTFutureSalts(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1370486635:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["req_msg_id"], callback);
         readInt32(stream, obj["now"], callback);
         readVector(stream, obj["salts"], (void*) &readMTFutureSalt);
@@ -439,9 +439,9 @@ void readMTFutureSalts(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTFutureSalts(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1370486635:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["req_msg_id"], callback);
         writeInt32(stream, obj["now"], callback);
         writeVector(stream, obj["salts"], (void*) &writeMTFutureSalt);
@@ -456,7 +456,7 @@ void readMTPong(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 880243653:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["msg_id"], callback);
         readInt64(stream, obj["ping_id"], callback);
     break;
@@ -467,9 +467,9 @@ void readMTPong(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTPong(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 880243653:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["msg_id"], callback);
         writeInt64(stream, obj["ping_id"], callback);
     break;
@@ -483,11 +483,11 @@ void readMTDestroySessionRes(TelegramStream &stream, QVariant &i, void* callback
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -501201412:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["session_id"], callback);
     break;
     case 1658015945:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["session_id"], callback);
     break;
     }
@@ -497,13 +497,13 @@ void readMTDestroySessionRes(TelegramStream &stream, QVariant &i, void* callback
 void writeMTDestroySessionRes(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -501201412:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["session_id"], callback);
     break;
     case 1658015945:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["session_id"], callback);
     break;
     }
@@ -516,7 +516,7 @@ void readMTNewSession(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1631450872:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["first_msg_id"], callback);
         readInt64(stream, obj["unique_id"], callback);
         readInt64(stream, obj["server_salt"], callback);
@@ -528,9 +528,9 @@ void readMTNewSession(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTNewSession(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1631450872:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["first_msg_id"], callback);
         writeInt64(stream, obj["unique_id"], callback);
         writeInt64(stream, obj["server_salt"], callback);
@@ -545,7 +545,7 @@ void readMTMessageContainer(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1945237724:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readVector(stream, obj["messages"], (void*) &readMTMessage);
     break;
     }
@@ -555,9 +555,9 @@ void readMTMessageContainer(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMessageContainer(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1945237724:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeVector(stream, obj["messages"], (void*) &writeMTMessage);
     break;
     }
@@ -570,7 +570,7 @@ void readMTMessage(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1538843921:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["msg_id"], callback);
         readInt32(stream, obj["seqno"], callback);
         readInt32(stream, obj["bytes"], callback);
@@ -583,9 +583,9 @@ void readMTMessage(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMessage(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1538843921:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["msg_id"], callback);
         writeInt32(stream, obj["seqno"], callback);
         writeInt32(stream, obj["bytes"], callback);
@@ -601,7 +601,7 @@ void readMTMessageCopy(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -530561358:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readMTMessage(stream, obj["orig_message"], callback);
     break;
     }
@@ -611,9 +611,9 @@ void readMTMessageCopy(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMessageCopy(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -530561358:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeMTMessage(stream, obj["orig_message"], callback);
     break;
     }
@@ -626,7 +626,7 @@ void readMTObject(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 812830625:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readByteArray(stream, obj["packed_data"], callback);
     break;
     }
@@ -636,9 +636,9 @@ void readMTObject(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTObject(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 812830625:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeByteArray(stream, obj["packed_data"], callback);
     break;
     }
@@ -651,7 +651,7 @@ void readMTMsgsAck(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1658238041:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readVector(stream, obj["msg_ids"], (void*) &readInt64);
     break;
     }
@@ -661,9 +661,9 @@ void readMTMsgsAck(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMsgsAck(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1658238041:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeVector(stream, obj["msg_ids"], (void*) &writeInt64);
     break;
     }
@@ -676,13 +676,13 @@ void readMTBadMsgNotification(TelegramStream &stream, QVariant &i, void* callbac
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1477445615:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["bad_msg_id"], callback);
         readInt32(stream, obj["bad_msg_seqno"], callback);
         readInt32(stream, obj["error_code"], callback);
     break;
     case -307542917:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["bad_msg_id"], callback);
         readInt32(stream, obj["bad_msg_seqno"], callback);
         readInt32(stream, obj["error_code"], callback);
@@ -695,15 +695,15 @@ void readMTBadMsgNotification(TelegramStream &stream, QVariant &i, void* callbac
 void writeMTBadMsgNotification(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1477445615:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["bad_msg_id"], callback);
         writeInt32(stream, obj["bad_msg_seqno"], callback);
         writeInt32(stream, obj["error_code"], callback);
     break;
     case -307542917:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["bad_msg_id"], callback);
         writeInt32(stream, obj["bad_msg_seqno"], callback);
         writeInt32(stream, obj["error_code"], callback);
@@ -719,7 +719,7 @@ void readMTMsgResendReq(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 2105940488:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readVector(stream, obj["msg_ids"], (void*) &readInt64);
     break;
     }
@@ -729,9 +729,9 @@ void readMTMsgResendReq(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMsgResendReq(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 2105940488:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeVector(stream, obj["msg_ids"], (void*) &writeInt64);
     break;
     }
@@ -744,7 +744,7 @@ void readMTMsgsStateReq(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -630588590:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readVector(stream, obj["msg_ids"], (void*) &readInt64);
     break;
     }
@@ -754,9 +754,9 @@ void readMTMsgsStateReq(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMsgsStateReq(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -630588590:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeVector(stream, obj["msg_ids"], (void*) &writeInt64);
     break;
     }
@@ -769,7 +769,7 @@ void readMTMsgsStateInfo(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 81704317:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["req_msg_id"], callback);
         readByteArray(stream, obj["info"], callback);
     break;
@@ -780,9 +780,9 @@ void readMTMsgsStateInfo(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMsgsStateInfo(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 81704317:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["req_msg_id"], callback);
         writeByteArray(stream, obj["info"], callback);
     break;
@@ -796,7 +796,7 @@ void readMTMsgsAllInfo(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1933520591:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readVector(stream, obj["msg_ids"], (void*) &readInt64);
         readByteArray(stream, obj["info"], callback);
     break;
@@ -807,9 +807,9 @@ void readMTMsgsAllInfo(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMsgsAllInfo(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1933520591:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeVector(stream, obj["msg_ids"], (void*) &writeInt64);
         writeByteArray(stream, obj["info"], callback);
     break;
@@ -823,14 +823,14 @@ void readMTMsgDetailedInfo(TelegramStream &stream, QVariant &i, void* callback)
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 661470918:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["msg_id"], callback);
         readInt64(stream, obj["answer_msg_id"], callback);
         readInt32(stream, obj["bytes"], callback);
         readInt32(stream, obj["status"], callback);
     break;
     case -2137147681:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
         readInt64(stream, obj["answer_msg_id"], callback);
         readInt32(stream, obj["bytes"], callback);
         readInt32(stream, obj["status"], callback);
@@ -842,16 +842,16 @@ void readMTMsgDetailedInfo(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMsgDetailedInfo(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 661470918:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["msg_id"], callback);
         writeInt64(stream, obj["answer_msg_id"], callback);
         writeInt32(stream, obj["bytes"], callback);
         writeInt32(stream, obj["status"], callback);
     break;
     case -2137147681:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["answer_msg_id"], callback);
         writeInt32(stream, obj["bytes"], callback);
         writeInt32(stream, obj["status"], callback);
@@ -866,13 +866,13 @@ void readMTDestroyAuthKeyRes(TelegramStream &stream, QVariant &i, void* callback
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -161422892:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
     break;
     case 178201177:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
     break;
     case -368010477:
-        obj["id"] = conId.toInt();
+        obj["_"] = conId.toInt();
     break;
     }
     i = obj;
@@ -881,15 +881,15 @@ void readMTDestroyAuthKeyRes(TelegramStream &stream, QVariant &i, void* callback
 void writeMTDestroyAuthKeyRes(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -161422892:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     case 178201177:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     case -368010477:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     }
 }
@@ -908,9 +908,9 @@ void readMTMethodReqPqMulti(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMethodReqPqMulti(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1099002127:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
     break;
     }
@@ -930,9 +930,9 @@ void readMTMethodReqDHParams(TelegramStream &stream, QVariant &i, void* callback
 void writeMTMethodReqDHParams(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -686627650:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeByteArray(stream, obj["p"], callback);
@@ -957,9 +957,9 @@ void readMTMethodSetClientDHParams(TelegramStream &stream, QVariant &i, void* ca
 void writeMTMethodSetClientDHParams(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -184262881:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt128(stream, obj["nonce"], callback);
         writeInt128(stream, obj["server_nonce"], callback);
         writeByteArray(stream, obj["encrypted_data"], callback);
@@ -981,9 +981,9 @@ void readMTMethodRpcDropAnswer(TelegramStream &stream, QVariant &i, void* callba
 void writeMTMethodRpcDropAnswer(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 1491380032:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["req_msg_id"], callback);
     break;
     }
@@ -1003,9 +1003,9 @@ void readMTMethodGetFutureSalts(TelegramStream &stream, QVariant &i, void* callb
 void writeMTMethodGetFutureSalts(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1188971260:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt32(stream, obj["num"], callback);
     break;
     }
@@ -1025,9 +1025,9 @@ void readMTMethodPing(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMethodPing(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case 2059302892:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["ping_id"], callback);
     break;
     }
@@ -1047,9 +1047,9 @@ void readMTMethodPingDelayDisconnect(TelegramStream &stream, QVariant &i, void* 
 void writeMTMethodPingDelayDisconnect(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -213746804:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["ping_id"], callback);
         writeInt32(stream, obj["disconnect_delay"], callback);
     break;
@@ -1070,9 +1070,9 @@ void readMTMethodDestroySession(TelegramStream &stream, QVariant &i, void* callb
 void writeMTMethodDestroySession(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -414113498:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["session_id"], callback);
     break;
     }
@@ -1092,9 +1092,9 @@ void readMTMethodHttpWait(TelegramStream &stream, QVariant &i, void* callback)
 void writeMTMethodHttpWait(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -1835453025:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeInt32(stream, obj["max_delay"], callback);
         writeInt32(stream, obj["wait_after"], callback);
         writeInt32(stream, obj["max_wait"], callback);
@@ -1116,9 +1116,9 @@ void readMTMethodDestroyAuthKey(TelegramStream &stream, QVariant &i, void* callb
 void writeMTMethodDestroyAuthKey(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case -784117408:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
     break;
     }
 }

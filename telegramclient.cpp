@@ -16,6 +16,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
 {
     QMap<qint32, HANDLE_METHOD> map;
     map[MTType::ResPQ] = &TelegramClient::handleResPQ;
+    map[MTType::ServerDHParamsOk] = &TelegramClient::handleServerDHParamsOk;
     return map;
 }
 
@@ -94,6 +95,9 @@ void TelegramClient::socket_readyRead()
 
     //Read message
     QByteArray messageArray = readMessage();
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "Socket was" << messageArray.length() << "byte(s) readed";
+#endif
     TelegramPacket message(messageArray);
 
     QVariant id;
@@ -329,4 +333,19 @@ void TelegramClient::handleResPQ(QByteArray data)
         qDebug() << "ReqDHParams:" << reqDHParamsPacket.toByteArray().toHex();
 #endif
     sendPlainPacket(reqDHParamsPacket.toByteArray());
+}
+
+void TelegramClient::handleServerDHParamsOk(QByteArray data)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readMTServerDHParams(packet, var);
+    TelegramObject serverDHParams = var.toMap();
+
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << serverDHParams;
+#endif
+
+
 }

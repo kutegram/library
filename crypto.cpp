@@ -181,9 +181,9 @@ QByteArray hashSHA1(QByteArray dataToHash)
 void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
-    switch (obj["id"].toInt()) {
+    switch (obj["_"].toInt()) {
     case PQINNERDATA_ID:
-        writeInt32(stream, obj["id"], callback);
+        writeInt32(stream, obj["_"], callback);
         writeByteArray(stream, obj["pq"], callback);
         writeByteArray(stream, obj["p"], callback);
         writeByteArray(stream, obj["q"], callback);

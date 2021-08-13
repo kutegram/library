@@ -13,7 +13,10 @@ typedef QByteArray TelegramInt256;
 
 #define TGOBJECT(name, id)  \
     TelegramObject name;    \
-    name["id"] = id;
+    name["_"] = id;
+
+#define GETID(name)         \
+    name["_"].toInt()
 
 #define INT32_BYTES 4
 #define INT64_BYTES 8

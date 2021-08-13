@@ -27,6 +27,7 @@ public:
     explicit TelegramClient(QObject *parent = 0);
 
     void handleResPQ(QByteArray data);
+    void handleServerDHParamsOk(QByteArray data);
 signals:
     void handleResponse(QByteArray data, qint32 conId);
 public slots:
