@@ -10,6 +10,7 @@
 #include <QMap>
 #include <QtCore>
 #include "tlschema.h"
+#include <QApplication>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
 
@@ -451,10 +452,60 @@ void TelegramClient::handleDhGenOk(QByteArray data)
         qDebug() << "Authorization succeeded.";
 #endif
 
-    requestDCConfig();
+    initConnection();
 }
 
-void TelegramClient::requestDCConfig()
+//TODO: Use QSysInfo
+QString osName()
 {
+#if defined(Q_OS_ANDROID)
+    return QString("Android");
+#elif defined(Q_OS_BLACKBERRY)
+    return QString("Blackberry OS");
+#elif defined(Q_OS_IOS)
+    return QString("iOS");
+#elif defined(Q_OS_MACOS)
+    return QString("macOS");
+#elif defined(Q_OS_WINCE)
+    return QString("Windows CE");
+#elif defined(Q_OS_WIN)
+    return QString("Windows");
+#elif defined(Q_OS_LINUX)
+    return QString("Linux");
+#elif defined(Q_OS_UNIX)
+    return QString("Unix");
+#elif defined(Q_OS_SYMBIAN)
+    return QString("Symbian");
+#else
+    return QString("Unknown");
+#endif
+}
 
+void TelegramClient::initConnection()
+{
+    TGOBJECT(getDCC, TLType::HelpGetConfigMethod);
+
+    TGOBJECT(initRequest, TLType::InitConnectionMethod);
+    initRequest["api_id"] = APP_ID;
+    initRequest["device_model"] = osName() + "-based Device";
+    initRequest["system_version"] = osName();
+    initRequest["app_version"] = QApplication::applicationVersion();
+    initRequest["system_lang_code"] = "en"; //TODO
+    initRequest["lang_pack"] = "";
+    initRequest["lang_code"] = "en"; //TODO
+    initRequest["query"] = getDCC;
+
+    TGOBJECT(invoke, TLType::InvokeWithLayerMethod);
+    invoke["layer"] = API_LAYER;
+    invoke["query"] = initRequest;
+
+    TelegramPacket invokePacket;
+    writeTLMethodInvokeWithLayer
+            < &readTLMethodInitConnection
+            < &readTLMethodHelpGetConfig ,
+            &writeTLMethodHelpGetConfig > ,
+            &writeTLMethodInitConnection
+            < &readTLMethodHelpGetConfig ,
+            &writeTLMethodHelpGetConfig > >(invokePacket, invoke);
+    sendMTPacket(invokePacket.toByteArray());
 }

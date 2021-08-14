@@ -19,6 +19,7 @@ private:
     QByteArray newNonce;
     QByteArray serverNonce;
 
+    void sendMTPacket(QByteArray raw);
     void sendPlainPacket(QByteArray raw);
     void sendMessage(QByteArray raw);
     QByteArray readMessage();
@@ -30,7 +31,7 @@ public:
     void handleServerDHParamsOk(QByteArray data);
     void handleDhGenOk(QByteArray data);
 
-    void requestDCConfig();
+    void initConnection();
 signals:
     void handleResponse(QByteArray data, qint32 conId);
 public slots:
