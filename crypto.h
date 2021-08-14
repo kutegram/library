@@ -31,5 +31,7 @@ QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp);
 QByteArray hashSHA256(QByteArray dataToHash);
 QByteArray hashSHA1(QByteArray dataToHash);
 void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback = 0);
+QByteArray calcMessageKey(QByteArray a);
+QByteArray calcEncryptionKey(QByteArray sharedKey, QByteArray msgKey, QByteArray &iv, bool client);
 
 #endif // CRYPTO_H

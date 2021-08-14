@@ -11,6 +11,7 @@
 #include <QtCore>
 #include "tlschema.h"
 #include <QApplication>
+#include <QMutex>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
 
@@ -24,9 +25,10 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
 }
 
 QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
+QMutex lock;
 
 TelegramClient::TelegramClient(QObject *parent, TelegramSession sess) :
-    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce()
+    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm()
 {
 
 }
@@ -481,6 +483,67 @@ QString osName()
 #endif
 }
 
+quint64 TelegramClient::getNewMessageId()
+{
+    lock.lock();
+    quint64 time = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
+    quint64 newMessageId = ((time / 1000 + session.timeOffset) << 32) | ((time % 1000) << 22);
+
+    if (session.lastMessageId >= newMessageId) newMessageId = session.lastMessageId + 4;
+    session.lastMessageId = newMessageId;
+    lock.unlock();
+    return newMessageId;
+}
+
+qint32 TelegramClient::generateSequence(bool confirmed)
+{
+    lock.lock();
+    return confirmed ? session.sequence++ * 2 + 1 : session.sequence * 2;
+    lock.unlock();
+}
+
+void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
+{
+    //TODO: add timer send timeout
+//    while (!ignoreConfirm && !_confirm.isEmpty()) {
+//        TelegramStream req;
+//        req << 0x62d6b459;
+//        req << 0x1cb5c415;
+
+//        QList<quint64> m = _confirm.mid(0, 8192);
+//        req << m.size();
+//        for (qint32 i = 0; i < m.size(); ++i) {
+//            _confirm.removeFirst();
+//            req << m[i];
+//        }
+
+    quint64 messageId = getNewMessageId();
+    messages.insert(messageId, raw);
+
+    TelegramPacket packet;
+    writeUInt64(packet, session.salt);
+    writeInt64(packet, session.id);
+    writeUInt64(packet, messageId);
+    writeInt32(packet, generateSequence(true)); //TODO: check confirmed variable
+    writeInt32(packet, raw.length());
+    packet.writeRawBytes(raw);
+
+    QByteArray packetBytes = packet.toByteArray();
+    QByteArray messageKey = calcMessageKey(packetBytes);
+    QByteArray keyIv;
+    QByteArray keyData = calcEncryptionKey(session.authKey.key, messageKey, keyIv, true);
+    packetBytes += randomBytes(16 - (packetBytes.size() % 16));
+    QByteArray cipherText = encryptAES256IGE(packetBytes, keyIv, keyData);
+
+    TelegramPacket cipherPacket;
+    writeUInt64(cipherPacket, session.authKey.id);
+    cipherPacket.writeRawBytes(messageKey);
+    cipherPacket.writeRawBytes(cipherText);
+
+    sendMessage(cipherPacket.toByteArray());
+    sync();
+}
+
 void TelegramClient::initConnection()
 {
     TGOBJECT(getDCC, TLType::HelpGetConfigMethod);
@@ -508,4 +571,12 @@ void TelegramClient::initConnection()
             < &readTLMethodHelpGetConfig ,
             &writeTLMethodHelpGetConfig > >(invokePacket, invoke);
     sendMTPacket(invokePacket.toByteArray());
+}
+
+void TelegramClient::sync()
+{
+    //TODO session save
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "Sync session. TODO ME.";
+#endif
 }

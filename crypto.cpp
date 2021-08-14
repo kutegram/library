@@ -196,3 +196,22 @@ void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback
     break;
     }
 }
+
+QByteArray calcMessageKey(QByteArray a)
+{
+    return hashSHA1(a).mid(4, 16);
+}
+
+QByteArray calcEncryptionKey(QByteArray sharedKey, QByteArray msgKey, QByteArray &iv, bool client)
+{
+    qint32 x = client ? 0 : 8;
+
+    QByteArray sha1a = hashSHA1(msgKey.mid(0, 16) + sharedKey.mid(x, 32));
+    QByteArray sha1b = hashSHA1(sharedKey.mid(32+x, 16) + msgKey.mid(0, 16) + sharedKey.mid(48+x, 16));
+    QByteArray sha1c = hashSHA1(sharedKey.mid(64+x, 32) + msgKey.mid(0, 16));
+    QByteArray sha1d = hashSHA1(msgKey.mid(0, 16) + sharedKey.mid(96+x, 32));
+
+    iv = sha1a.mid(8, 12) + sha1b.mid(0, 8) + sha1c.mid(16, 4) + sha1d.mid(0, 8);
+
+    return (sha1a.mid(0, 8) + sha1b.mid(8, 12) + sha1c.mid(4, 12));
+}
