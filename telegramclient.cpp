@@ -9,6 +9,7 @@
 #include "crypto.h"
 #include <QMap>
 #include <QtCore>
+#include "tlschema.h"
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
 
