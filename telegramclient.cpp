@@ -17,13 +17,14 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     QMap<qint32, HANDLE_METHOD> map;
     map[MTType::ResPQ] = &TelegramClient::handleResPQ;
     map[MTType::ServerDHParamsOk] = &TelegramClient::handleServerDHParamsOk;
+    map[MTType::DhGenOk] = &TelegramClient::handleDhGenOk;
     return map;
 }
 
 QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 
-TelegramClient::TelegramClient(QObject *parent) :
-    QObject(parent), session(0), socket(0), stream(0), newNonce(), nonce()
+TelegramClient::TelegramClient(QObject *parent, TelegramSession sess) :
+    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce()
 {
 
 }
@@ -212,6 +213,9 @@ void TelegramClient::handleMessage(QByteArray messageData)
         qDebug() << "Got an unknown TL object ( id" << conId.toInt() << "):" << messageData.toHex();
 #endif
     } else {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "Got an known TL object ( id" << conId.toInt() << ")";
+#endif
         (this->*method)(messageData);
     }
 
@@ -225,10 +229,6 @@ void TelegramClient::handleResPQ(QByteArray data)
 
     readMTResPQ(packet, var);
     TelegramObject resPQ = var.toMap();
-
-#ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << resPQ;
-#endif
 
     if (nonce != resPQ["nonce"].toByteArray()) {
 #ifndef QT_NO_DEBUG_OUTPUT
@@ -273,9 +273,9 @@ void TelegramClient::handleResPQ(QByteArray data)
     quint32 q = pq / p;
     if (p > q) qSwap(p, q);
 
-    QByteArray pBytes(4, 0);
+    QByteArray pBytes(INT32_BYTES, 0);
     qToBigEndian(p, (uchar*) pBytes.data());
-    QByteArray qBytes(4, 0);
+    QByteArray qBytes(INT32_BYTES, 0);
     qToBigEndian(q, (uchar*) qBytes.data());
 
     //Generating ReqDHParams
@@ -343,9 +343,117 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
     readMTServerDHParams(packet, var);
     TelegramObject serverDHParams = var.toMap();
 
+    if (nonce != serverDHParams["nonce"].toByteArray()) {
 #ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << serverDHParams;
+        qDebug() << "SECURITY ERROR: nonces are mismatched!";
+#endif
+        return;
+    }
+
+    if (serverNonce != serverDHParams["server_nonce"].toByteArray()) {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "SECURITY ERROR: server nonces are mismatched!";
+#endif
+        return;
+    }
+
+    QByteArray answer = serverDHParams["encrypted_answer"].toByteArray();
+
+    if (answer.size() & 15) {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "SECURITY ERROR: bad padding for encrypted answer!";
+#endif
+        return;
+    }
+
+    //Handling ServerDHInnerData
+    QByteArray tempAesKey = hashSHA1(newNonce + serverNonce) + hashSHA1(serverNonce + newNonce).mid(0, 12);
+    QByteArray tempAesIv = hashSHA1(serverNonce + newNonce).mid(12, 8) + hashSHA1(newNonce + newNonce) + newNonce.mid(0, 4);
+    TelegramPacket answerPacket(decryptAES256IGE(answer, tempAesIv, tempAesKey));
+    answerPacket.readRawBytes(answer, 20);
+    readMTServerDHInnerData(answerPacket, var);
+    TelegramObject serverDHInnerData = var.toMap();
+
+    session.timeOffset = serverDHInnerData["server_time"].toInt()  - (qint32) (QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() / 1000);
+
+    QByteArray gBytes(INT32_BYTES, 0);
+    qToBigEndian(serverDHInnerData["g"].toInt(), (uchar*) gBytes.data());
+
+    Integer bb = toBig(randomBytes(256));
+    Integer bg = toBig(gBytes);
+    ModularArithmetic mr(toBig(serverDHInnerData["dh_prime"].toByteArray()));
+
+    //Sending setClientDHParams
+    TGOBJECT(setClientDHParams, MTType::SetClientDHParamsMethod);
+    setClientDHParams["nonce"] = nonce;
+    setClientDHParams["server_nonce"] = serverNonce;
+
+    //Generating encrypted data / ClientDHInnerData
+    TGOBJECT(clientDHInnerData, MTType::ClientDHInnerData);
+    clientDHInnerData["nonce"] = nonce;
+    clientDHInnerData["server_nonce"] = serverNonce;
+    clientDHInnerData["retry_id"] = 0;
+    clientDHInnerData["g_b"] = fromBig(mr.Exponentiate(bg, bb));
+
+    TelegramPacket clientDHInnerDataPacket;
+    writeMTClientDHInnerData(clientDHInnerDataPacket, clientDHInnerData);
+    QByteArray clientDHIDArray = clientDHInnerDataPacket.toByteArray();
+
+    QByteArray clientDataWithHash = hashSHA1(clientDHIDArray) + clientDHIDArray;
+    clientDataWithHash += randomBytes(16 - (clientDataWithHash.size() % 16));
+    setClientDHParams["encrypted_data"] = encryptAES256IGE(clientDataWithHash, tempAesIv, tempAesKey);
+
+    QByteArray mainKey = fromBig(mr.Exponentiate(toBig(serverDHInnerData["g_a"].toByteArray()), bb));
+    session.authKey = QByteArray(256 - mainKey.size(), 0) + mainKey;
+
+    TelegramPacket setCDHPPacket;
+    writeMTMethodSetClientDHParams(setCDHPPacket, setClientDHParams);
+    sendPlainPacket(setCDHPPacket.toByteArray());
+}
+
+void TelegramClient::handleDhGenOk(QByteArray data)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readMTSetClientDHParamsAnswer(packet, var);
+    TelegramObject dhGenOk = var.toMap();
+
+    if (nonce != dhGenOk["nonce"].toByteArray()) {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "SECURITY ERROR: nonces are mismatched!";
+#endif
+        return;
+    }
+
+    if (serverNonce != dhGenOk["server_nonce"].toByteArray()) {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "SECURITY ERROR: server nonces are mismatched!";
+#endif
+        return;
+    }
+
+    QByteArray newNonceHash1 = dhGenOk["new_nonce_hash1"].toByteArray();
+    if (session.authKey.calcNewNonceHash(newNonce, 1) != newNonceHash1) {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "SECURITY ERROR: new nonce hashes are mismatched!";
+#endif
+        return;
+    }
+
+    session.salt = qFromBigEndian<quint64>((uchar*) xorArray(newNonce.mid(0, 8), serverNonce.mid(0, 8)).data());
+    session.id = qFromBigEndian<qint64>((uchar*) randomBytes(INT64_BYTES).data());
+
+    //Success.
+    //TODO: handle dhgen errors, auth errors.
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "Authorization succeeded.";
 #endif
 
+    requestDCConfig();
+}
+
+void TelegramClient::requestDCConfig()
+{
 
 }

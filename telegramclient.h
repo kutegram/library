@@ -11,7 +11,7 @@ class TelegramClient : public QObject
 {
     Q_OBJECT
 private:
-    TelegramSession *session;
+    TelegramSession session;
     QTcpSocket *socket;
     TelegramStream *stream;
 
@@ -24,10 +24,13 @@ private:
     QByteArray readMessage();
     void handleMessage(QByteArray messageData);
 public:
-    explicit TelegramClient(QObject *parent = 0);
+    explicit TelegramClient(QObject *parent = 0, TelegramSession session = TelegramSession());
 
     void handleResPQ(QByteArray data);
     void handleServerDHParamsOk(QByteArray data);
+    void handleDhGenOk(QByteArray data);
+
+    void requestDCConfig();
 signals:
     void handleResponse(QByteArray data, qint32 conId);
 public slots:
