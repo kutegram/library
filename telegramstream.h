@@ -11,9 +11,6 @@ typedef QVariantList TelegramVector;
 typedef QByteArray TelegramInt128;
 typedef QByteArray TelegramInt256;
 
-typedef void (*WRITE_METHOD)(TelegramStream&, QVariant, void*);
-typedef void (*READ_METHOD)(TelegramStream&, QVariant&, void*);
-
 #define TGOBJECT(name, id)  \
     TelegramObject name;    \
     name["_"] = id;
@@ -48,6 +45,8 @@ public slots:
 };
 
 typedef TelegramStream TelegramPacket;
+typedef void (*WRITE_METHOD)(TelegramStream&, QVariant, void*);
+typedef void (*READ_METHOD)(TelegramStream&, QVariant&, void*);
 
 void readUInt8(TelegramStream& stream, QVariant &i, void* callback = 0);
 void readUInt32(TelegramStream& stream, QVariant &i, void* callback = 0);
