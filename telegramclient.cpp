@@ -316,7 +316,7 @@ void TelegramClient::handleResPQ(QByteArray data)
 
     //Generating PQInnerData
     //TGOBJECT(pqInnerData, MTType::PQInnerDataDc);
-    TGOBJECT(pqInnerData, PQINNERDATA_ID); //PQInnerDataDc doesn't works. Telegram, why?
+    TGOBJECT(pqInnerData, PQINNERDATA_ID); //TODO: PQInnerDataDc doesn't works. Telegram, why?
     pqInnerData["pq"] = pqBytes;
     pqInnerData["p"] = pBytes;
     pqInnerData["q"] = qBytes;
