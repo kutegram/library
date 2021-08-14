@@ -4,9 +4,6 @@
 #define BOOL_TRUE -1720552011
 #define BOOL_FALSE -1132882121
 
-typedef void (*WRITE_METHOD)(TelegramStream&, QVariant, void*);
-typedef void (*READ_METHOD)(TelegramStream&, QVariant&, void*);
-
 TelegramStream::TelegramStream(QByteArray input) :
     QObject(0), array(new QByteArray(input)), stream(new QDataStream(array, QIODevice::ReadWrite))
 {
