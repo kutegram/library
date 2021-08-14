@@ -121,14 +121,38 @@ void TelegramClient::socket_readyRead()
     QByteArray plainData;
 
     if (!id.toULongLong()) {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "Got an plain message.";
+#endif
         //auth_key_id == 0: it is a plain message.
         message.skipRawBytes(8); //message_id
         QVariant messageLength;
         readInt32(message, messageLength);
         message.readRawBytes(plainData, messageLength.toInt());
     } else {
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "Got an MTProto message.";
+#endif
         //auth_key_id != 0: it is a MTProto message.
-        //TODO
+        //TODO: Important checks http://web.archive.org/web/20131105115120/http://dev.stel.com/mtproto/description#vazhnye-proverki
+        //TODO: check auth key id
+        //TODO: check msg_key correctness
+        //TODO: add to confirmation / confirmation timer
+
+        QByteArray messageKey;
+        message.readRawBytes(messageKey, 16);
+        QByteArray keyIv;
+        QByteArray keyData = calcEncryptionKey(session.authKey.key, messageKey, keyIv, false);
+        //TODO: NB: after decryption, msg_key must be equal to SHA-1 of data thus obtained.
+        TelegramStream messagePlain(decryptAES256IGE(messageArray.mid(24), keyIv, keyData));
+        QVariant var;
+        readUInt64(messagePlain, var); //remoteSalt
+        readUInt64(messagePlain, var); //remoteId
+        readUInt64(messagePlain, var); //remoteMessageId
+        confirm.append(var.toULongLong());
+        readInt32(messagePlain, var); //remoteSequence
+        readInt32(messagePlain, var); //messageLength
+        messagePlain.readRawBytes(plainData, var.toInt());
     }
 
     handleMessage(plainData);
