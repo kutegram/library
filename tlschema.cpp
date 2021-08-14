@@ -15617,48 +15617,48 @@ void writeTLStatsMessageStats(TelegramStream &stream, QVariant i, void* callback
     }
 }
 
-void readTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -878758099:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
     case -878758099:
         writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["msg_id"], callback);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }
 
-void readTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 1036301552:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
     case 1036301552:
         writeInt32(stream, obj["_"], callback);
         writeVector(stream, obj["msg_ids"], (void*) &writeInt64);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }
@@ -17457,18 +17457,18 @@ void writeTLMethodUploadSaveBigFilePart(TelegramStream &stream, QVariant i, void
     }
 }
 
-void readTLMethodInitConnection(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInitConnection(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1043505495:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -17487,7 +17487,7 @@ void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callb
         writeString(stream, obj["lang_code"], callback);
         if (obj["flags"].toUInt() & 1) writeTLInputClientProxy(stream, obj["proxy"], callback);
         if (obj["flags"].toUInt() & 2) writeTLJSONValue(stream, obj["params"], callback);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }
@@ -17712,25 +17712,25 @@ void writeTLMethodAccountSetAccountTTL(TelegramStream &stream, QVariant i, void*
     }
 }
 
-void readTLMethodInvokeWithLayer(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithLayer(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -627372787:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInvokeWithLayer(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithLayer(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
     case -627372787:
         writeInt32(stream, obj["_"], callback);
         writeInt32(stream, obj["layer"], callback);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }
@@ -18096,24 +18096,24 @@ void writeTLMethodAuthRecoverPassword(TelegramStream &stream, QVariant i, void* 
     }
 }
 
-void readTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1080796745:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
     case -1080796745:
         writeInt32(stream, obj["_"], callback);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }
@@ -21730,48 +21730,48 @@ void writeTLMethodMessagesGetSplitRanges(TelegramStream &stream, QVariant i, voi
     }
 }
 
-void readTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case 911373810:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
     case 911373810:
         writeInt32(stream, obj["_"], callback);
         writeTLMessageRange(stream, obj["range"], callback);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }
 
-void readTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant &i, void* callback)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
     switch (conId.toInt()) {
     case -1398145746:
-    //Unsupported. (x, !x, object)
+    if (R) (*R)(stream, i, callback);
     break;
     }
 }
 
-void writeTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant i, void* callback)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
     case -1398145746:
         writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["takeout_id"], callback);
-        //Unsupported. (x, !x, object)
+        if (W) (*W)(stream, obj["query"], callback);
     break;
     }
 }

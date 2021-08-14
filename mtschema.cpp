@@ -305,7 +305,7 @@ void readMTRpcResult(TelegramStream &stream, QVariant &i, void* callback)
     case -212046591:
         obj["_"] = conId.toInt();
         readInt64(stream, obj["req_msg_id"], callback);
-        //Unsupported. (x, !x, object)
+        //Unsupported. (object)
     break;
     }
     i = obj;
@@ -318,7 +318,7 @@ void writeMTRpcResult(TelegramStream &stream, QVariant i, void* callback)
     case -212046591:
         writeInt32(stream, obj["_"], callback);
         writeInt64(stream, obj["req_msg_id"], callback);
-        //Unsupported. (x, !x, object)
+        //Unsupported. (object)
     break;
     }
 }
@@ -574,7 +574,7 @@ void readMTMessage(TelegramStream &stream, QVariant &i, void* callback)
         readInt64(stream, obj["msg_id"], callback);
         readInt32(stream, obj["seqno"], callback);
         readInt32(stream, obj["bytes"], callback);
-        //Unsupported. (x, !x, object)
+        //Unsupported. (object)
     break;
     }
     i = obj;
@@ -589,7 +589,7 @@ void writeMTMessage(TelegramStream &stream, QVariant i, void* callback)
         writeInt64(stream, obj["msg_id"], callback);
         writeInt32(stream, obj["seqno"], callback);
         writeInt32(stream, obj["bytes"], callback);
-        //Unsupported. (x, !x, object)
+        //Unsupported. (object)
     break;
     }
 }
