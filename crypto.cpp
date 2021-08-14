@@ -9,6 +9,7 @@
 #include "thirdparty/aes.hpp"
 #include <QCryptographicHash>
 #include "mtschema.h"
+#include <QtCore>
 
 DHKey::DHKey(QString publicKey, qint64 fingerprint, QString exponent) :
     publicKey(QByteArray::fromHex(publicKey.toAscii())),
@@ -16,6 +17,11 @@ DHKey::DHKey(QString publicKey, qint64 fingerprint, QString exponent) :
     fingerprint(fingerprint)
 {
 
+}
+
+qint32 randomInt(qint32 lowerThan) {
+    if (lowerThan < 1) return 0;
+    return qAbs(qFromBigEndian<qint32>((uchar*) randomBytes(4).data())) % lowerThan;
 }
 
 QByteArray randomBytes(qint32 size)
@@ -197,21 +203,19 @@ void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback
     }
 }
 
-QByteArray calcMessageKey(QByteArray a)
+QByteArray calcMessageKey(QByteArray authKey, QByteArray data)
 {
-    return hashSHA1(a).mid(4, 16);
+    return hashSHA256(authKey.mid(88, 32) + data).mid(8, 16);
 }
 
-QByteArray calcEncryptionKey(QByteArray sharedKey, QByteArray msgKey, QByteArray &iv, bool client)
+QByteArray calcEncryptionKey(QByteArray authKey, QByteArray msgKey, QByteArray &iv, bool client)
 {
     qint32 x = client ? 0 : 8;
 
-    QByteArray sha1a = hashSHA1(msgKey.mid(0, 16) + sharedKey.mid(x, 32));
-    QByteArray sha1b = hashSHA1(sharedKey.mid(32+x, 16) + msgKey.mid(0, 16) + sharedKey.mid(48+x, 16));
-    QByteArray sha1c = hashSHA1(sharedKey.mid(64+x, 32) + msgKey.mid(0, 16));
-    QByteArray sha1d = hashSHA1(msgKey.mid(0, 16) + sharedKey.mid(96+x, 32));
+    QByteArray sha256A = hashSHA256(msgKey + authKey.mid(x, 36));
+    QByteArray sha256B = hashSHA256(authKey.mid(40 + x, 36) + msgKey);
 
-    iv = sha1a.mid(8, 12) + sha1b.mid(0, 8) + sha1c.mid(16, 4) + sha1d.mid(0, 8);
+    iv = sha256B.mid(0, 8) + sha256A.mid(8, 16) + sha256B.mid(24, 8);
 
-    return (sha1a.mid(0, 8) + sha1b.mid(8, 12) + sha1c.mid(4, 12));
+    return sha256A.mid(0, 8) + sha256B.mid(8, 16) + sha256A.mid(24, 8);
 }

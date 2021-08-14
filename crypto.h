@@ -19,6 +19,7 @@ struct DHKey
     DHKey(QString publicKey, qint64 fingerprint, QString exponent = "010001");
 };
 
+qint32 randomInt(qint32 lowerThan);
 QByteArray randomBytes(qint32 size);
 quint64 findDivider(quint64 number);
 QByteArray reverse(QByteArray array);
@@ -31,7 +32,7 @@ QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp);
 QByteArray hashSHA256(QByteArray dataToHash);
 QByteArray hashSHA1(QByteArray dataToHash);
 void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback = 0);
-QByteArray calcMessageKey(QByteArray a);
+QByteArray calcMessageKey(QByteArray authKey, QByteArray data);
 QByteArray calcEncryptionKey(QByteArray sharedKey, QByteArray msgKey, QByteArray &iv, bool client);
 
 #endif // CRYPTO_H

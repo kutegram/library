@@ -551,12 +551,12 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
     writeInt32(packet, generateSequence(true)); //TODO: check confirmed variable
     writeInt32(packet, raw.length());
     packet.writeRawBytes(raw);
+    packet.writeRawBytes(randomBytes(randomInt(64) * 16 + 16 - (32 + raw.length()) % 16));
 
     QByteArray packetBytes = packet.toByteArray();
-    QByteArray messageKey = calcMessageKey(packetBytes);
+    QByteArray messageKey = calcMessageKey(session.authKey.key, packetBytes);
     QByteArray keyIv;
     QByteArray keyData = calcEncryptionKey(session.authKey.key, messageKey, keyIv, true);
-    packetBytes += randomBytes(16 - (packetBytes.size() % 16));
     QByteArray cipherText = encryptAES256IGE(packetBytes, keyIv, keyData);
 
     TelegramPacket cipherPacket;
