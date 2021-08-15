@@ -9,6 +9,11 @@
 #include <QList>
 #include <QMap>
 
+enum State
+{
+    STOPPED
+};
+
 class TelegramClient : public QObject
 {
     Q_OBJECT
@@ -21,8 +26,10 @@ private:
     QByteArray newNonce;
     QByteArray serverNonce;
 
-    QMap<quint64, QByteArray> messages;
-    QList<quint64> confirm;
+    QMap<qint64, QByteArray> messages;
+    QList<qint64> confirm;
+
+    State state;
 
     void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
@@ -30,7 +37,7 @@ private:
     QByteArray readMessage();
     void handleMessage(QByteArray messageData);
 
-    quint64 getNewMessageId();
+    qint64 getNewMessageId();
     qint32 generateSequence(bool confirmed);
 public:
     explicit TelegramClient(QObject *parent = 0, TelegramSession session = TelegramSession());
@@ -38,10 +45,13 @@ public:
     void handleResPQ(QByteArray data);
     void handleServerDHParamsOk(QByteArray data);
     void handleDhGenOk(QByteArray data);
+    void handleBadServerSalt(QByteArray data);
+    void handleRpcResult(QByteArray data);
 
     void initConnection();
 signals:
     void handleResponse(QByteArray data, qint32 conId);
+    void stateChanged(State state);
 public slots:
     void start();
     void stop();

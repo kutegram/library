@@ -20,4 +20,5 @@ SOURCES += \
     $$PWD/telegramsession.cpp \
     $$PWD/mtschema.cpp \
     $$PWD/tlschema.cpp \
-    $$PWD/crypto.cpp
+    $$PWD/crypto.cpp \
+    $$PWD/telegramhandling.cpp

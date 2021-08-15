@@ -175,7 +175,7 @@ QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp)
 QByteArray hashSHA256(QByteArray dataToHash)
 {
     QByteArray dataHash(32, 0);
-    picosha2::hash256(dataToHash.data(), dataToHash.data() + dataToHash.size(), dataHash.data(), dataHash.data() + dataHash.size());
+    picosha2::hash256(dataToHash.begin(), dataToHash.end(), dataHash.begin(), dataHash.end());
     return dataHash;
 }
 

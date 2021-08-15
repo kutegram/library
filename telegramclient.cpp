@@ -21,14 +21,16 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::ResPQ] = &TelegramClient::handleResPQ;
     map[MTType::ServerDHParamsOk] = &TelegramClient::handleServerDHParamsOk;
     map[MTType::DhGenOk] = &TelegramClient::handleDhGenOk;
+    map[MTType::BadServerSalt] = &TelegramClient::handleBadServerSalt;
+    map[MTType::RpcResult] = &TelegramClient::handleRpcResult;
     return map;
 }
 
 QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
-QMutex lock;
+QMutex lock(QMutex::Recursive);
 
 TelegramClient::TelegramClient(QObject *parent, TelegramSession sess) :
-    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm()
+    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED)
 {
 
 }
@@ -148,8 +150,8 @@ void TelegramClient::socket_readyRead()
         QVariant var;
         readUInt64(messagePlain, var); //remoteSalt
         readUInt64(messagePlain, var); //remoteId
-        readUInt64(messagePlain, var); //remoteMessageId
-        confirm.append(var.toULongLong());
+        readInt64(messagePlain, var); //remoteMessageId
+        confirm.append(var.toLongLong());
         readInt32(messagePlain, var); //remoteSequence
         readInt32(messagePlain, var); //messageLength
         messagePlain.readRawBytes(plainData, var.toInt());
@@ -507,11 +509,11 @@ QString osName()
 #endif
 }
 
-quint64 TelegramClient::getNewMessageId()
+qint64 TelegramClient::getNewMessageId()
 {
     lock.lock();
-    quint64 time = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
-    quint64 newMessageId = ((time / 1000 + session.timeOffset) << 32) | ((time % 1000) << 22);
+    qint64 time = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
+    qint64 newMessageId = ((time / 1000 + session.timeOffset) << 32) | ((time % 1000) << 22);
 
     if (session.lastMessageId >= newMessageId) newMessageId = session.lastMessageId + 4;
     session.lastMessageId = newMessageId;
@@ -529,25 +531,30 @@ qint32 TelegramClient::generateSequence(bool confirmed)
 void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 {
     //TODO: add timer send timeout
-//    while (!ignoreConfirm && !_confirm.isEmpty()) {
-//        TelegramStream req;
-//        req << 0x62d6b459;
-//        req << 0x1cb5c415;
+    while (!ignoreConfirm && !confirm.isEmpty()) {
+        TGOBJECT(msgsAck, MTType::MsgsAck);
+        TelegramVector msgIds;
+        qint32 count = qMin(confirm.size(), 8192);
+        msgIds.reserve(count);
+        for (qint32 i = 0; i < count; ++i) {
+            msgIds << confirm[i];
+        }
+        confirm.erase(confirm.begin(), confirm.begin() + count); //TODO: remove only on msgsAck recieved
+        msgsAck["msg_ids"] = msgIds;
 
-//        QList<quint64> m = _confirm.mid(0, 8192);
-//        req << m.size();
-//        for (qint32 i = 0; i < m.size(); ++i) {
-//            _confirm.removeFirst();
-//            req << m[i];
-//        }
+        TelegramPacket ackPacket;
+        writeMTMsgsAck(ackPacket, msgsAck);
+        sendMTPacket(ackPacket.toByteArray(), true);
+    }
 
-    quint64 messageId = getNewMessageId();
+    if (raw.isEmpty()) return;
+    qint64 messageId = getNewMessageId();
     messages.insert(messageId, raw);
 
     TelegramPacket packet;
     writeUInt64(packet, session.salt);
     writeInt64(packet, session.id);
-    writeUInt64(packet, messageId);
+    writeInt64(packet, messageId);
     writeInt32(packet, generateSequence(true)); //TODO: check confirmed variable
     writeInt32(packet, raw.length());
     packet.writeRawBytes(raw);

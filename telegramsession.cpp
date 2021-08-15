@@ -57,8 +57,8 @@ TelegramSession& TelegramSession::deserialize(QString hex)
     timeOffset = var.toInt();
     readInt64(packet, var);
     id = var.toLongLong();
-    readUInt64(packet, var);
-    lastMessageId = var.toULongLong();
+    readInt64(packet, var);
+    lastMessageId = var.toLongLong();
     readInt32(packet, var);
     sequence = var.toInt();
 
@@ -75,7 +75,7 @@ QString TelegramSession::serialize()
     writeUInt64(packet, salt);
     writeInt32(packet, timeOffset);
     writeInt64(packet, id);
-    writeUInt64(packet, lastMessageId);
+    writeInt64(packet, lastMessageId);
     writeInt32(packet, sequence);
 
     return QString::fromAscii(packet.toByteArray().toHex());

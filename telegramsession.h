@@ -22,7 +22,7 @@ struct TelegramSession
     quint64 salt;
     qint32 timeOffset;
     qint64 id;
-    quint64 lastMessageId;
+    qint64 lastMessageId;
     qint32 sequence;
 
     TelegramSession& deserialize(QString hex);

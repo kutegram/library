@@ -1213,6 +1213,22 @@ enum Types
 };
 }
 
+
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInitConnection(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithLayer(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithLayer(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant i, void* callback = 0);
+
 void readTLBool(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeTLBool(TelegramStream &stream, QVariant i, void* callback = 0);
 void readTLTrue(TelegramStream &stream, QVariant &i, void* callback = 0);
@@ -1814,9 +1830,7 @@ void writeTLPeerBlocked(TelegramStream &stream, QVariant i, void* callback = 0);
 void readTLStatsMessageStats(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeTLStatsMessageStats(TelegramStream &stream, QVariant i, void* callback = 0);
 
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -1827,7 +1841,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsg(Telegra
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsg(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -1839,9 +1853,7 @@ template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsg(Telegr
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -1852,7 +1864,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeAfterMsgs(Telegr
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeAfterMsgs(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -2012,9 +2024,7 @@ void readTLMethodMessagesReportEncryptedSpam(TelegramStream &stream, QVariant &i
 void writeTLMethodMessagesReportEncryptedSpam(TelegramStream &stream, QVariant i, void* callback = 0);
 void readTLMethodUploadSaveBigFilePart(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeTLMethodUploadSaveBigFilePart(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInitConnection(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInitConnection(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInitConnection(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -2025,7 +2035,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInitConnection(Telegra
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInitConnection(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -2069,9 +2079,7 @@ void readTLMethodAccountGetAccountTTL(TelegramStream &stream, QVariant &i, void*
 void writeTLMethodAccountGetAccountTTL(TelegramStream &stream, QVariant i, void* callback = 0);
 void readTLMethodAccountSetAccountTTL(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeTLMethodAccountSetAccountTTL(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithLayer(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithLayer(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithLayer(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithLayer(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -2082,7 +2090,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithLayer(Telegr
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithLayer(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithLayer(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -2126,9 +2134,7 @@ void readTLMethodAuthRequestPasswordRecovery(TelegramStream &stream, QVariant &i
 void writeTLMethodAuthRequestPasswordRecovery(TelegramStream &stream, QVariant i, void* callback = 0);
 void readTLMethodAuthRecoverPassword(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeTLMethodAuthRecoverPassword(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -2139,7 +2145,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithoutUpdates(T
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithoutUpdates(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -2448,9 +2454,7 @@ void readTLMethodAccountFinishTakeoutSession(TelegramStream &stream, QVariant &i
 void writeTLMethodAccountFinishTakeoutSession(TelegramStream &stream, QVariant i, void* callback = 0);
 void readTLMethodMessagesGetSplitRanges(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeTLMethodMessagesGetSplitRanges(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -2461,7 +2465,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithMessagesRang
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithMessagesRange(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {
@@ -2473,9 +2477,7 @@ template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithMessagesRan
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant &i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant i, void* callback = 0);
-template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant &i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant &i, void* callback = 0)
 {
     QVariant conId;
     readInt32(stream, conId, callback);
@@ -2486,7 +2488,7 @@ template <READ_METHOD R, WRITE_METHOD W> void readTLMethodInvokeWithTakeout(Tele
     }
 }
 
-template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant i, void* callback)
+template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInvokeWithTakeout(TelegramStream &stream, QVariant i, void* callback = 0)
 {
     TelegramObject obj = i.toMap();
     switch (obj["_"].toInt()) {

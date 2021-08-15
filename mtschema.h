@@ -59,6 +59,16 @@ enum Types
 };
 }
 
+template <READ_METHOD R, WRITE_METHOD W> void readMTRpcResult(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeMTRpcResult(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readMTMessageContainer(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeMTMessageContainer(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readMTMessage(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeMTMessage(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readMTMessageCopy(TelegramStream &stream, QVariant &i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void writeMTMessageCopy(TelegramStream &stream, QVariant i, void* callback = 0);
+
+
 void readMTVector(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeMTVector(TelegramStream &stream, QVariant i, void* callback = 0);
 void readMTResPQ(TelegramStream &stream, QVariant &i, void* callback = 0);
@@ -75,8 +85,33 @@ void readMTSetClientDHParamsAnswer(TelegramStream &stream, QVariant &i, void* ca
 void writeMTSetClientDHParamsAnswer(TelegramStream &stream, QVariant i, void* callback = 0);
 void readMTBindAuthKeyInner(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeMTBindAuthKeyInner(TelegramStream &stream, QVariant i, void* callback = 0);
-void readMTRpcResult(TelegramStream &stream, QVariant &i, void* callback = 0);
-void writeMTRpcResult(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readMTRpcResult(TelegramStream &stream, QVariant &i, void* callback = 0)
+{
+    TelegramObject obj;
+    QVariant conId;
+    readInt32(stream, conId, callback);
+    switch (conId.toInt()) {
+    case -212046591:
+        obj["_"] = conId.toInt();
+        readInt64(stream, obj["req_msg_id"], callback);
+        if (R) (*R)(stream, obj["result"], callback);
+    break;
+    }
+    i = obj;
+}
+
+template <READ_METHOD R, WRITE_METHOD W> void writeMTRpcResult(TelegramStream &stream, QVariant i, void* callback = 0)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["_"].toInt()) {
+    case -212046591:
+        writeInt32(stream, obj["_"], callback);
+        writeInt64(stream, obj["req_msg_id"], callback);
+        if (W) (*W)(stream, obj["result"], callback);
+    break;
+    }
+}
+
 void readMTRpcError(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeMTRpcError(TelegramStream &stream, QVariant i, void* callback = 0);
 void readMTRpcDropAnswer(TelegramStream &stream, QVariant &i, void* callback = 0);
@@ -91,12 +126,85 @@ void readMTDestroySessionRes(TelegramStream &stream, QVariant &i, void* callback
 void writeMTDestroySessionRes(TelegramStream &stream, QVariant i, void* callback = 0);
 void readMTNewSession(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeMTNewSession(TelegramStream &stream, QVariant i, void* callback = 0);
-void readMTMessageContainer(TelegramStream &stream, QVariant &i, void* callback = 0);
-void writeMTMessageContainer(TelegramStream &stream, QVariant i, void* callback = 0);
-void readMTMessage(TelegramStream &stream, QVariant &i, void* callback = 0);
-void writeMTMessage(TelegramStream &stream, QVariant i, void* callback = 0);
-void readMTMessageCopy(TelegramStream &stream, QVariant &i, void* callback = 0);
-void writeMTMessageCopy(TelegramStream &stream, QVariant i, void* callback = 0);
+template <READ_METHOD R, WRITE_METHOD W> void readMTMessageContainer(TelegramStream &stream, QVariant &i, void* callback = 0)
+{
+    TelegramObject obj;
+    QVariant conId;
+    readInt32(stream, conId, callback);
+    switch (conId.toInt()) {
+    case 1945237724:
+        obj["_"] = conId.toInt();
+        readVector(stream, obj["messages"], (void*) &readMTMessage<R, W>);
+    break;
+    }
+    i = obj;
+}
+
+template <READ_METHOD R, WRITE_METHOD W> void writeMTMessageContainer(TelegramStream &stream, QVariant i, void* callback = 0)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["_"].toInt()) {
+    case 1945237724:
+        writeInt32(stream, obj["_"], callback);
+        writeVector(stream, obj["messages"], (void*) &writeMTMessage<R, W>);
+    break;
+    }
+}
+
+template <READ_METHOD R, WRITE_METHOD W> void readMTMessage(TelegramStream &stream, QVariant &i, void* callback = 0)
+{
+    TelegramObject obj;
+    QVariant conId;
+    switch (conId.toInt()) {
+    case 1538843921:
+        obj["_"] = conId.toInt();
+        readInt64(stream, obj["msg_id"], callback);
+        readInt32(stream, obj["seqno"], callback);
+        readInt32(stream, obj["bytes"], callback);
+        if (R) (*R)(stream, obj["body"], callback);
+    break;
+    }
+    i = obj;
+}
+
+template <READ_METHOD R, WRITE_METHOD W> void writeMTMessage(TelegramStream &stream, QVariant i, void* callback = 0)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["_"].toInt()) {
+    case 1538843921:
+            writeInt64(stream, obj["msg_id"], callback);
+        writeInt32(stream, obj["seqno"], callback);
+        writeInt32(stream, obj["bytes"], callback);
+        if (W) (*W)(stream, obj["body"], callback);
+    break;
+    }
+}
+
+template <READ_METHOD R, WRITE_METHOD W> void readMTMessageCopy(TelegramStream &stream, QVariant &i, void* callback = 0)
+{
+    TelegramObject obj;
+    QVariant conId;
+    readInt32(stream, conId, callback);
+    switch (conId.toInt()) {
+    case -530561358:
+        obj["_"] = conId.toInt();
+        readMTMessage<R, W>(stream, obj["orig_message"], callback);
+    break;
+    }
+    i = obj;
+}
+
+template <READ_METHOD R, WRITE_METHOD W> void writeMTMessageCopy(TelegramStream &stream, QVariant i, void* callback = 0)
+{
+    TelegramObject obj = i.toMap();
+    switch (obj["_"].toInt()) {
+    case -530561358:
+        writeInt32(stream, obj["_"], callback);
+        writeMTMessage<R, W>(stream, obj["orig_message"], callback);
+    break;
+    }
+}
+
 void readMTObject(TelegramStream &stream, QVariant &i, void* callback = 0);
 void writeMTObject(TelegramStream &stream, QVariant i, void* callback = 0);
 void readMTMsgsAck(TelegramStream &stream, QVariant &i, void* callback = 0);
