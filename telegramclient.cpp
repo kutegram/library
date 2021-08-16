@@ -23,6 +23,12 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::DhGenOk] = &TelegramClient::handleDhGenOk;
     map[MTType::BadServerSalt] = &TelegramClient::handleBadServerSalt;
     map[MTType::RpcResult] = &TelegramClient::handleRpcResult;
+    map[MTType::GzipPacked] = &TelegramClient::handleGzipPacked;
+    map[MTType::MsgContainer] = &TelegramClient::handleMsgContainer;
+    map[MTType::BadMsgNotification] = &TelegramClient::handleBadMsgNotification;
+    map[MTType::NewSessionCreated] = &TelegramClient::handleNewSessionCreated;
+    map[MTType::RpcError] = &TelegramClient::handleRpcError;
+    map[TLType::Config] = &TelegramClient::handleConfig;
     return map;
 }
 
@@ -33,6 +39,16 @@ TelegramClient::TelegramClient(QObject *parent, TelegramSession sess) :
     QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED)
 {
 
+}
+
+bool TelegramClient::isAuthorized()
+{
+    return !session.authKey.key.isEmpty() && session.salt && session.authKey.auxHash && session.authKey.id;
+}
+
+bool TelegramClient::isConnected()
+{
+    return socket && socket->isOpen();
 }
 
 void TelegramClient::start()
@@ -74,6 +90,10 @@ void TelegramClient::socket_connected()
     writeUInt8(*stream, 0xEF);
 
     //If we are authorized - skip to request DC config
+    if (isAuthorized()) {
+        initConnection();
+        return;
+    }
 
     //Authorizing a key
     //Sending ReqPqMulti

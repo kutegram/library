@@ -47,8 +47,16 @@ public:
     void handleDhGenOk(QByteArray data);
     void handleBadServerSalt(QByteArray data);
     void handleRpcResult(QByteArray data);
+    void handleGzipPacked(QByteArray data);
+    void handleMsgContainer(QByteArray data);
+    void handleBadMsgNotification(QByteArray data);
+    void handleNewSessionCreated(QByteArray data);
+    void handleRpcError(QByteArray data);
+    void handleConfig(QByteArray data);
 
     void initConnection();
+    bool isAuthorized();
+    bool isConnected();
 signals:
     void handleResponse(QByteArray data, qint32 conId);
     void stateChanged(State state);
