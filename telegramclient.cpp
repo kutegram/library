@@ -28,6 +28,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::BadMsgNotification] = &TelegramClient::handleBadMsgNotification;
     map[MTType::NewSessionCreated] = &TelegramClient::handleNewSessionCreated;
     map[MTType::RpcError] = &TelegramClient::handleRpcError;
+    map[MTType::MsgCopy] = &TelegramClient::handleMsgCopy;
     map[TLType::Config] = &TelegramClient::handleConfig;
     return map;
 }

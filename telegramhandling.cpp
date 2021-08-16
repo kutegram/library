@@ -113,3 +113,17 @@ void TelegramClient::handleConfig(QByteArray data)
 #endif
     sync();
 }
+
+void TelegramClient::handleMsgCopy(QByteArray data)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readInt32(packet, var); //conId
+    readInt64(packet, var); //msgId
+    readInt32(packet, var); //seqNo
+    readInt32(packet, var); //size
+    QByteArray array;
+    packet.readRawBytes(array, var.toInt());
+    handleMessage(array);
+}

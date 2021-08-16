@@ -53,6 +53,7 @@ public:
     void handleNewSessionCreated(QByteArray data);
     void handleRpcError(QByteArray data);
     void handleConfig(QByteArray data);
+    void handleMsgCopy(QByteArray data);
 
     void initConnection();
     bool isAuthorized();
