@@ -29,6 +29,7 @@ private:
     QMap<qint64, QByteArray> messages;
     QList<qint64> confirm;
 
+    //TODO
     State state;
 
     void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);

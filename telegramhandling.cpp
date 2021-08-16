@@ -96,6 +96,7 @@ void TelegramClient::handleRpcError(QByteArray data)
     readMTRpcError(packet, var);
     TelegramObject rpcError = var.toMap();
 
+    //TODO
 //    if (rpcError["error_message"].toString() == "AUTH_KEY_UNREGISTERED") {
 //        _session.keyAuthenticated = false;
 //        sync();
