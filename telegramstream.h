@@ -23,6 +23,10 @@ typedef QByteArray TelegramInt256;
 #define INT128_BYTES 16
 #define INT256_BYTES 32
 
+#define VECTOR_ID 481674261
+#define BOOL_TRUE -1720552011
+#define BOOL_FALSE -1132882121
+
 class TelegramStream : public QObject
 {
     Q_OBJECT
