@@ -29,16 +29,21 @@ void TelegramClient::handleRpcResult(QByteArray data)
 
 void TelegramClient::handleGzipPacked(QByteArray data)
 {
-    data.remove(0, 4);
+    TelegramPacket packet(data);
+    packet.skipRawBytes(4); //conId
+
+    QVariant var;
+    readByteArray(packet, var);
+    data = var.toByteArray();
+
     Gunzip unzipper;
     unzipper.Put((const byte*) data.constData(), data.size(), true);
     unzipper.MessageEnd();
 
-    QByteArray decompressed;
-    decompressed.resize(unzipper.MaxRetrievable());
-    unzipper.Get((byte*) decompressed.data(), decompressed.size());
+    data.resize(unzipper.MaxRetrievable());
+    unzipper.Get((byte*) data.data(), data.size());
 
-    handleMessage(decompressed);
+    handleMessage(data);
 }
 
 void TelegramClient::handleMsgContainer(QByteArray data)
