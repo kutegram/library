@@ -84,7 +84,7 @@ void TelegramClient::handleBadMsgNotification(QByteArray data)
 
 void TelegramClient::handleNewSessionCreated(QByteArray data)
 {
-    changeState(AUTHORIZED);
+    //changeState(AUTHORIZED);
 
     TelegramPacket packet(data);
     QVariant var;

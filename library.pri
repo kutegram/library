@@ -21,4 +21,5 @@ SOURCES += \
     $$PWD/mtschema.cpp \
     $$PWD/tlschema.cpp \
     $$PWD/crypto.cpp \
-    $$PWD/telegramhandling.cpp
+    $$PWD/telegramhandling.cpp \
+    $$PWD/telegramapi.cpp
