@@ -18,9 +18,12 @@ typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
 QMap<qint32, HANDLE_METHOD> getHandleMap()
 {
     QMap<qint32, HANDLE_METHOD> map;
+
     map[MTType::ResPQ] = &TelegramClient::handleResPQ;
     map[MTType::ServerDHParamsOk] = &TelegramClient::handleServerDHParamsOk;
     map[MTType::DhGenOk] = &TelegramClient::handleDhGenOk;
+    map[MTType::DhGenFail] = &TelegramClient::handleDhGenFail;
+    map[MTType::DhGenRetry] = &TelegramClient::handleDhGenRetry;
     map[MTType::BadServerSalt] = &TelegramClient::handleBadServerSalt;
     map[MTType::RpcResult] = &TelegramClient::handleRpcResult;
     map[MTType::GzipPacked] = &TelegramClient::handleGzipPacked;
@@ -30,6 +33,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::RpcError] = &TelegramClient::handleRpcError;
     map[MTType::MsgCopy] = &TelegramClient::handleMsgCopy;
     map[TLType::Config] = &TelegramClient::handleConfig;
+
     return map;
 }
 
@@ -37,9 +41,15 @@ QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 QMutex lock(QMutex::Recursive);
 
 TelegramClient::TelegramClient(QObject *parent, TelegramSession sess) :
-    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED)
+    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED), retryId()
 {
 
+}
+
+void TelegramClient::changeState(State s)
+{
+    state = s;
+    emit stateChanged(s);
 }
 
 bool TelegramClient::isAuthorized()
@@ -66,6 +76,7 @@ void TelegramClient::start()
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
 
     stream = new TelegramStream(socket);
+    changeState(CONNECTING);
     socket->connectToHost(DC_IP, DC_PORT);
 }
 
@@ -77,6 +88,8 @@ void TelegramClient::stop()
     socket->deleteLater();
     socket = 0;
     stream = 0;
+    sync();
+    changeState(STOPPED);
 }
 
 void TelegramClient::socket_connected()
@@ -98,6 +111,8 @@ void TelegramClient::socket_connected()
 
     //Authorizing a key
     //Sending ReqPqMulti
+    changeState(DH_STEP_1);
+
     TGOBJECT(reqPqMulti, MTType::ReqPqMultiMethod);
     reqPqMulti["nonce"] = nonce = randomBytes(INT128_BYTES);
 
@@ -136,6 +151,7 @@ void TelegramClient::socket_readyRead()
 #ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "Got an message error:" << id.toInt();
 #endif
+        emit gotMTError(id.toInt());
         return;
     }
 
@@ -157,7 +173,7 @@ void TelegramClient::socket_readyRead()
         qDebug() << "Got an MTProto message.";
 #endif
         //auth_key_id != 0: it is a MTProto message.
-        //TODO: Important checks http://web.archive.org/web/20131105115120/http://dev.stel.com/mtproto/description#vazhnye-proverki
+        //TODO: Important checks
         //TODO: check auth key id
         //TODO: check msg_key correctness
         //TODO: add to confirmation / confirmation timer
@@ -166,7 +182,7 @@ void TelegramClient::socket_readyRead()
         message.readRawBytes(messageKey, 16);
         QByteArray keyIv;
         QByteArray keyData = calcEncryptionKey(session.authKey.key, messageKey, keyIv, false);
-        //TODO: NB: after decryption, msg_key must be equal to SHA-1 of data thus obtained.
+        //TODO: NB: after decryption, msg_key must be equal to SHA-256 of data thus obtained.
         TelegramStream messagePlain(decryptAES256IGE(messageArray.mid(24), keyIv, keyData));
         QVariant var;
         readUInt64(messagePlain, var); //remoteSalt
@@ -193,6 +209,8 @@ void TelegramClient::socket_error(QAbstractSocket::SocketError error)
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket has got an error:" << error;
 #endif
+
+    emit gotSocketError(error);
 }
 
 void TelegramClient::sendPlainPacket(QByteArray raw)
@@ -275,6 +293,8 @@ void TelegramClient::handleMessage(QByteArray messageData)
 
 void TelegramClient::handleResPQ(QByteArray data)
 {
+    changeState(DH_STEP_2);
+
     TelegramPacket packet(data);
     QVariant var;
 
@@ -291,14 +311,14 @@ void TelegramClient::handleResPQ(QByteArray data)
     serverNonce = resPQ["server_nonce"].toByteArray();
 
     static QList<DHKey> keychain = QList<DHKey>() //<< DHKey("be6a71558ee577ff03023cfa17aab4e6c86383cff8a7ad38edb9fafe6f323f2d5106cbc8cafb83b869cffd1ccf121cd743d509e589e68765c96601e813dc5b9dfc4be415c7a6526132d0035ca33d6d6075d4f535122a1cdfe017041f1088d1419f65c8e5490ee613e16dbf662698c0f54870f0475fa893fc41eb55b08ff1ac211bc045ded31be27d12c96d8d3cfc6a7ae8aa50bf2ee0f30ed507cc2581e3dec56de94f5dc0a7abee0be990b893f2887bd2c6310a1e0a9e3e38bd34fded2541508dc102a9c9b4c95effd9dd2dfe96c29be647d6c69d66ca500843cfaed6e440196f1dbe0e2e22163c61ca48c79116fa77216726749a976a1c4b0944b5121e8c01", 6491968696586960280LL)
-                                                  //<< DHKey("b3f762b739be98f343eb1921cf0148cfa27ff7af02b6471213fed9daa0098976e667750324f1abcea4c31e43b7d11f1579133f2b3d9fe27474e462058884e5e1b123be9cbbc6a443b2925c08520e7325e6f1a6d50e117eb61ea49d2534c8bb4d2ae4153fabe832b9edf4c5755fdd8b19940b81d1d96cf433d19e6a22968a85dc80f0312f596bd2530c1cfb28b5fe019ac9bc25cd9c2a5d8a0f3a1c0c79bcca524d315b5e21b5c26b46babe3d75d06d1cd33329ec782a0f22891ed1db42a1d6c0dea431428bc4d7aabdcf3e0eb6fda4e23eb7733e7727e9a1915580796c55188d2596d2665ad1182ba7abf15aaa5a8b779ea996317a20ae044b820bff35b6e8a1", -5859577972006586033LL)
-                                                  //<< DHKey("bdf2c77d81f6afd47bd30f29ac76e55adfe70e487e5e48297e5a9055c9c07d2b93b4ed3994d3eca5098bf18d978d54f8b7c713eb10247607e69af9ef44f38e28f8b439f257a11572945cc0406fe3f37bb92b79112db69eedf2dc71584a661638ea5becb9e23585074b80d57d9f5710dd30d2da940e0ada2f1b878397dc1a72b5ce2531b6f7dd158e09c828d03450ca0ff8a174deacebcaa22dde84ef66ad370f259d18af806638012da0ca4a70baa83d9c158f3552bc9158e69bf332a45809e1c36905a5caa12348dd57941a482131be7b2355a5f4635374f3bd3ddf5ff925bf4809ee27c1e67d9120c5fe08a9de458b1b4a3c5d0a428437f2beca81f4e2d5ff", 1562291298945373506LL)
-                                                  //<< DHKey("aeec36c8ffc109cb099624685b97815415657bd76d8c9c3e398103d7ad16c9bba6f525ed0412d7ae2c2de2b44e77d72cbf4b7438709a4e646a05c43427c7f184debf72947519680e651500890c6832796dd11f772c25ff8f576755afe055b0a3752c696eb7d8da0d8be1faf38c9bdd97ce0a77d3916230c4032167100edd0f9e7a3a9b602d04367b689536af0d64b613ccba7962939d3b57682beb6dae5b608130b2e52aca78ba023cf6ce806b1dc49c72cf928a7199d22e3d7ac84e47bc9427d0236945d10dbd15177bab413fbf0edfda09f014c7a7da088dde9759702ca760af2b8e4e97cc055c617bd74c3d97008635b98dc4d621b4891da9fb0473047927", 847625836280919973LL)
-                                                  << DHKey("c150023e2f70db7985ded064759cfecf0af328e69a41daf4d6f01b538135a6f91f8f8b2a0ec9ba9720ce352efcf6c5680ffc424bd634864902de0b4bd6d49f4e580230e3ae97d95c8b19442b3c0a10d8f5633fecedd6926a7f6dab0ddb7d457f9ea81b8465fcd6fffeed114011df91c059caedaf97625f6c96ecc74725556934ef781d866b34f011fce4d835a090196e9a5f0e4449af7eb697ddb9076494ca5f81104a305b6dd27665722c46b60e5df680fb16b210607ef217652e60236c255f6a28315f4083a96791d7214bf64c1df4fd0db1944fb26a2a57031b32eee64ad15a8ba68885cde74a5bfc920f6abf59ba5c75506373e7130f9042da922179251f", -4344800451088585951LL);
+            //<< DHKey("b3f762b739be98f343eb1921cf0148cfa27ff7af02b6471213fed9daa0098976e667750324f1abcea4c31e43b7d11f1579133f2b3d9fe27474e462058884e5e1b123be9cbbc6a443b2925c08520e7325e6f1a6d50e117eb61ea49d2534c8bb4d2ae4153fabe832b9edf4c5755fdd8b19940b81d1d96cf433d19e6a22968a85dc80f0312f596bd2530c1cfb28b5fe019ac9bc25cd9c2a5d8a0f3a1c0c79bcca524d315b5e21b5c26b46babe3d75d06d1cd33329ec782a0f22891ed1db42a1d6c0dea431428bc4d7aabdcf3e0eb6fda4e23eb7733e7727e9a1915580796c55188d2596d2665ad1182ba7abf15aaa5a8b779ea996317a20ae044b820bff35b6e8a1", -5859577972006586033LL)
+            //<< DHKey("bdf2c77d81f6afd47bd30f29ac76e55adfe70e487e5e48297e5a9055c9c07d2b93b4ed3994d3eca5098bf18d978d54f8b7c713eb10247607e69af9ef44f38e28f8b439f257a11572945cc0406fe3f37bb92b79112db69eedf2dc71584a661638ea5becb9e23585074b80d57d9f5710dd30d2da940e0ada2f1b878397dc1a72b5ce2531b6f7dd158e09c828d03450ca0ff8a174deacebcaa22dde84ef66ad370f259d18af806638012da0ca4a70baa83d9c158f3552bc9158e69bf332a45809e1c36905a5caa12348dd57941a482131be7b2355a5f4635374f3bd3ddf5ff925bf4809ee27c1e67d9120c5fe08a9de458b1b4a3c5d0a428437f2beca81f4e2d5ff", 1562291298945373506LL)
+            //<< DHKey("aeec36c8ffc109cb099624685b97815415657bd76d8c9c3e398103d7ad16c9bba6f525ed0412d7ae2c2de2b44e77d72cbf4b7438709a4e646a05c43427c7f184debf72947519680e651500890c6832796dd11f772c25ff8f576755afe055b0a3752c696eb7d8da0d8be1faf38c9bdd97ce0a77d3916230c4032167100edd0f9e7a3a9b602d04367b689536af0d64b613ccba7962939d3b57682beb6dae5b608130b2e52aca78ba023cf6ce806b1dc49c72cf928a7199d22e3d7ac84e47bc9427d0236945d10dbd15177bab413fbf0edfda09f014c7a7da088dde9759702ca760af2b8e4e97cc055c617bd74c3d97008635b98dc4d621b4891da9fb0473047927", 847625836280919973LL)
+            << DHKey("c150023e2f70db7985ded064759cfecf0af328e69a41daf4d6f01b538135a6f91f8f8b2a0ec9ba9720ce352efcf6c5680ffc424bd634864902de0b4bd6d49f4e580230e3ae97d95c8b19442b3c0a10d8f5633fecedd6926a7f6dab0ddb7d457f9ea81b8465fcd6fffeed114011df91c059caedaf97625f6c96ecc74725556934ef781d866b34f011fce4d835a090196e9a5f0e4449af7eb697ddb9076494ca5f81104a305b6dd27665722c46b60e5df680fb16b210607ef217652e60236c255f6a28315f4083a96791d7214bf64c1df4fd0db1944fb26a2a57031b32eee64ad15a8ba68885cde74a5bfc920f6abf59ba5c75506373e7130f9042da922179251f", -4344800451088585951LL);
 
     TelegramVector fingerprints = resPQ["server_public_key_fingerprints"].toList();
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Fingerprints:" << fingerprints;
+    qDebug() << "Fingerprints:" << fingerprints;
 #endif
 
     QList<DHKey> matched;
@@ -318,6 +338,8 @@ void TelegramClient::handleResPQ(QByteArray data)
         return;
     }
 
+    changeState(DH_STEP_3);
+
     QByteArray pqBytes = resPQ["pq"].toByteArray();
     quint64 pq = qFromBigEndian<quint64>((uchar*) pqBytes.data());
     quint32 p = findDivider(pq);
@@ -330,6 +352,8 @@ void TelegramClient::handleResPQ(QByteArray data)
     qToBigEndian(q, (uchar*) qBytes.data());
 
     //Generating ReqDHParams
+    changeState(DH_STEP_4);
+
     TGOBJECT(reqDHParams, MTType::ReqDHParamsMethod);
     reqDHParams["nonce"] = nonce;
     reqDHParams["server_nonce"] = serverNonce;
@@ -351,26 +375,26 @@ void TelegramClient::handleResPQ(QByteArray data)
     TelegramPacket pqInnerDataPacket;
     writeMTPQInnerDataCustom(pqInnerDataPacket, pqInnerData);
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "PQInnerDataDC:" << pqInnerDataPacket.toByteArray().toHex();
+    qDebug() << "PQInnerData:" << pqInnerDataPacket.toByteArray().toHex();
 #endif
 
     QByteArray pqInnerArray = pqInnerDataPacket.toByteArray();
     //MTProto RSA-PAD encrypted / required by PQInnerDataDc
-//    QByteArray dataArray = pqInnerArray + randomBytes(192 - pqInnerArray.length());
-//    Integer modulus = toBig(matched[0].publicKey);
+    //    QByteArray dataArray = pqInnerArray + randomBytes(192 - pqInnerArray.length());
+    //    Integer modulus = toBig(matched[0].publicKey);
 
-//    while (true) {
-//        QByteArray tempKey = randomBytes(32);
-//        QByteArray dataWithHash = reverse(dataArray) + hashSHA256(tempKey + dataArray);
-//        QByteArray decryptedData = encryptAES256IGE(dataWithHash, QByteArray(32, 0), tempKey);
-//        decryptedData = xorArray(tempKey, hashSHA256(decryptedData)) + decryptedData;
-//        Integer compare = toBig(decryptedData);
+    //    while (true) {
+    //        QByteArray tempKey = randomBytes(32);
+    //        QByteArray dataWithHash = reverse(dataArray) + hashSHA256(tempKey + dataArray);
+    //        QByteArray decryptedData = encryptAES256IGE(dataWithHash, QByteArray(32, 0), tempKey);
+    //        decryptedData = xorArray(tempKey, hashSHA256(decryptedData)) + decryptedData;
+    //        Integer compare = toBig(decryptedData);
 
-//        if (compare < modulus) {
-//            reqDHParams["encrypted_data"] = encryptRSA(decryptedData, matched[0].publicKey, matched[0].exponent);
-//            break;
-//        }
-//    }
+    //        if (compare < modulus) {
+    //            reqDHParams["encrypted_data"] = encryptRSA(decryptedData, matched[0].publicKey, matched[0].exponent);
+    //            break;
+    //        }
+    //    }
 
     //MTProto RSA encrypted
     QByteArray dataWithHash = hashSHA1(pqInnerArray) + pqInnerArray;
@@ -381,13 +405,15 @@ void TelegramClient::handleResPQ(QByteArray data)
     TelegramPacket reqDHParamsPacket;
     writeMTMethodReqDHParams(reqDHParamsPacket, reqDHParams);
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "ReqDHParams:" << reqDHParamsPacket.toByteArray().toHex();
+    qDebug() << "ReqDHParams:" << reqDHParamsPacket.toByteArray().toHex();
 #endif
     sendPlainPacket(reqDHParamsPacket.toByteArray());
 }
 
 void TelegramClient::handleServerDHParamsOk(QByteArray data)
 {
+    changeState(DH_STEP_5);
+
     TelegramPacket packet(data);
     QVariant var;
 
@@ -430,9 +456,13 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
     QByteArray gBytes(INT32_BYTES, 0);
     qToBigEndian(serverDHInnerData["g"].toInt(), (uchar*) gBytes.data());
 
+    changeState(DH_STEP_6);
+
     Integer bb = toBig(randomBytes(256));
     Integer bg = toBig(gBytes);
     ModularArithmetic mr(toBig(serverDHInnerData["dh_prime"].toByteArray()));
+
+    changeState(DH_STEP_7);
 
     //Sending setClientDHParams
     TGOBJECT(setClientDHParams, MTType::SetClientDHParamsMethod);
@@ -443,7 +473,7 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
     TGOBJECT(clientDHInnerData, MTType::ClientDHInnerData);
     clientDHInnerData["nonce"] = nonce;
     clientDHInnerData["server_nonce"] = serverNonce;
-    clientDHInnerData["retry_id"] = 0;
+    clientDHInnerData["retry_id"] = retryId++;
     clientDHInnerData["g_b"] = fromBig(mr.Exponentiate(bg, bb));
 
     TelegramPacket clientDHInnerDataPacket;
@@ -453,6 +483,8 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
     QByteArray clientDataWithHash = hashSHA1(clientDHIDArray) + clientDHIDArray;
     clientDataWithHash += randomBytes(16 - (clientDataWithHash.size() % 16));
     setClientDHParams["encrypted_data"] = encryptAES256IGE(clientDataWithHash, tempAesIv, tempAesKey);
+
+    changeState(DH_STEP_8);
 
     QByteArray mainKey = fromBig(mr.Exponentiate(toBig(serverDHInnerData["g_a"].toByteArray()), bb));
     session.authKey = QByteArray(256 - mainKey.size(), 0) + mainKey;
@@ -464,6 +496,8 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
 
 void TelegramClient::handleDhGenOk(QByteArray data)
 {
+    changeState(DH_STEP_9);
+
     TelegramPacket packet(data);
     QVariant var;
 
@@ -498,8 +532,10 @@ void TelegramClient::handleDhGenOk(QByteArray data)
     //Success.
     //TODO: handle dhgen errors, auth errors.
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Authorization succeeded.";
+    qDebug() << "Authorization succeeded.";
 #endif
+
+    changeState(AUTHORIZED);
 
     initConnection();
 }
@@ -598,6 +634,8 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 
 void TelegramClient::initConnection()
 {
+    changeState(INITING);
+
     TGOBJECT(getDCC, TLType::HelpGetConfigMethod);
 
     TGOBJECT(initRequest, TLType::InitConnectionMethod);
@@ -629,6 +667,26 @@ void TelegramClient::sync()
 {
     //TODO session save
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Sync session. TODO ME.";
+    qDebug() << "Sync session. TODO ME.";
 #endif
+}
+
+void TelegramClient::handleDhGenFail(QByteArray data)
+{
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "DH generation failed.";
+#endif
+
+    emit gotDHError(true);
+    stop();
+}
+
+void TelegramClient::handleDhGenRetry(QByteArray data)
+{
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "DH generation requires a retry.";
+#endif
+
+    emit gotDHError(false);
+    stop();
 }

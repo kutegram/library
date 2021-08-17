@@ -19,6 +19,8 @@ void TelegramClient::handleBadServerSalt(QByteArray data)
 
     session.salt = badServerSalt["new_server_salt"].toULongLong();
     sendMTPacket(messages[badServerSalt["bad_msg_id"].toLongLong()]);
+
+    emit gotMessageError(badServerSalt["error_code"].toInt());
 }
 
 void TelegramClient::handleRpcResult(QByteArray data)
@@ -76,10 +78,14 @@ void TelegramClient::handleBadMsgNotification(QByteArray data)
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a bad msg notification:" << badMsgNotify["error_code"].toInt();
 #endif
+
+    emit gotMessageError(badMsgNotify["error_code"].toInt());
 }
 
 void TelegramClient::handleNewSessionCreated(QByteArray data)
 {
+    changeState(AUTHORIZED);
+
     TelegramPacket packet(data);
     QVariant var;
 
@@ -101,19 +107,24 @@ void TelegramClient::handleRpcError(QByteArray data)
     readMTRpcError(packet, var);
     TelegramObject rpcError = var.toMap();
 
-    //TODO
-//    if (rpcError["error_message"].toString() == "AUTH_KEY_UNREGISTERED") {
-//        _session.keyAuthenticated = false;
-//        sync();
-//    }
 
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got RPC error:" << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 #endif
+
+    emit gotRPCError(rpcError["error_code"].toInt(), rpcError["error_message"].toString());
+
+    if (rpcError["error_message"].toString() == "AUTH_KEY_UNREGISTERED") {
+        stop();
+        session.authKey = AuthKey();
+        sync();
+    }
 }
 
 void TelegramClient::handleConfig(QByteArray data)
 {
+    changeState(INITED);
+
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a config. Connection inited.";
 #endif
