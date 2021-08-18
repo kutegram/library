@@ -31,7 +31,6 @@ void TelegramStream::writeRawBytes(QByteArray i)
 void TelegramStream::readRawBytes(QByteArray &i, qint32 count)
 {
     i.resize(count);
-    //i.reserve(count);
     qint32 readedTotal = 0;
     while (count > 0) {
         //TODO: leave if no data for long time

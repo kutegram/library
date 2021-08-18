@@ -25,8 +25,8 @@ enum State
     AUTHORIZED,
     INITING,
     INITED,
-    LOGGING_IN,
-    LOGGED_IN
+    LOGGING_IN, //TODO
+    LOGGED_IN //TODO
 };
 
 class TelegramClient : public QObject
@@ -47,6 +47,7 @@ private:
 
     State state;
 
+    //TODO send packets via objects arguments with callback or template
     void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
     void sendMessage(QByteArray raw);
@@ -73,10 +74,20 @@ public:
     void handleMsgCopy(QByteArray data);
     void handleDhGenRetry(QByteArray data);
     void handleDhGenFail(QByteArray data);
+    void handleLoginToken(QByteArray data);
+    void handleSentCode(QByteArray data);
+    void handleAuthorization(QByteArray data);
 
     void initConnection();
     bool isAuthorized();
+    bool isOpened();
     bool isConnected();
+
+    State getState();
+
+    void exportLoginToken();
+    void sendCode(QString phone_number);
+    void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
 signals:
     void handleResponse(QByteArray data, qint32 conId);
     void stateChanged(State state);
@@ -86,6 +97,10 @@ signals:
     void gotDHError(bool fail);
     void gotMessageError(qint32 error_code);
     void gotRPCError(qint32 error_code, QString error_message);
+
+    void gotLoginToken(qint32 expires, QString tokenUrl);
+    void gotSentCode(QString phone_code_hash);
+    void gotAuthorization();
 public slots:
     void start();
     void stop();

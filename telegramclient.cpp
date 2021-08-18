@@ -32,7 +32,12 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::NewSessionCreated] = &TelegramClient::handleNewSessionCreated;
     map[MTType::RpcError] = &TelegramClient::handleRpcError;
     map[MTType::MsgCopy] = &TelegramClient::handleMsgCopy;
+
     map[TLType::Config] = &TelegramClient::handleConfig;
+    map[TLType::AuthSentCode] = &TelegramClient::handleSentCode;
+    map[TLType::Authorization] = &TelegramClient::handleAuthorization;
+
+    map[TLType::AuthLoginToken] = &TelegramClient::handleLoginToken;
 
     return map;
 }
@@ -57,9 +62,19 @@ bool TelegramClient::isAuthorized()
     return !session.authKey.key.isEmpty() && session.salt && session.authKey.auxHash && session.authKey.id;
 }
 
-bool TelegramClient::isConnected()
+bool TelegramClient::isOpened()
 {
     return socket && socket->isOpen();
+}
+
+State TelegramClient::getState()
+{
+    return state;
+}
+
+bool TelegramClient::isConnected()
+{
+    return isOpened() && isAuthorized() && state == INITED;
 }
 
 void TelegramClient::start()
@@ -222,7 +237,7 @@ void TelegramClient::sendPlainPacket(QByteArray raw)
     TelegramPacket packet;
 
     writeInt64(packet, 0);
-    writeInt64(packet, ((QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() / 1000) << 32));
+    writeInt64(packet, ((QDateTime::currentDateTime().toUTC().toTime_t()) << 32));
     writeInt32(packet, raw.length());
     packet.writeRawBytes(raw);
 
@@ -451,7 +466,7 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
     readMTServerDHInnerData(answerPacket, var);
     TelegramObject serverDHInnerData = var.toMap();
 
-    session.timeOffset = serverDHInnerData["server_time"].toInt()  - (qint32) (QDateTime::currentDateTimeUtc().toMSecsSinceEpoch() / 1000);
+    session.timeOffset = serverDHInnerData["server_time"].toInt()  - (qint32) (QDateTime::currentDateTime().toUTC().toTime_t());
 
     QByteArray gBytes(INT32_BYTES, 0);
     qToBigEndian(serverDHInnerData["g"].toInt(), (uchar*) gBytes.data());
@@ -569,8 +584,8 @@ QString osName()
 qint64 TelegramClient::getNewMessageId()
 {
     lock.lock();
-    qint64 time = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();
-    qint64 newMessageId = ((time / 1000 + session.timeOffset) << 32) | ((time % 1000) << 22);
+    qint64 time = QDateTime::currentDateTime().toUTC().toTime_t();
+    qint64 newMessageId = ((time + session.timeOffset) << 32) | ((time % 1000) << 22);
 
     if (session.lastMessageId >= newMessageId) newMessageId = session.lastMessageId + 4;
     session.lastMessageId = newMessageId;
@@ -592,7 +607,6 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
         TGOBJECT(msgsAck, MTType::MsgsAck);
         TelegramVector msgIds;
         qint32 count = qMin(confirm.size(), 8192);
-        msgIds.reserve(count);
         for (qint32 i = 0; i < count; ++i) {
             msgIds << confirm[i];
         }

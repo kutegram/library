@@ -28,7 +28,7 @@ QByteArray randomBytes(qint32 size)
 {
     QByteArray array;
 
-    qsrand(QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000);
+    qsrand(QDateTime::currentDateTime().toUTC().toTime_t());
     array.reserve(size);
     while (array.length() < size) array.append((quint8) (qrand() % 256));
     array.resize(size);
@@ -70,7 +70,7 @@ quint64 gcd(quint64 a, quint64 b) {
 
 quint64 findDivider(quint64 number)
 {
-    qsrand(QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000);
+    qsrand(QDateTime::currentDateTime().toUTC().toTime_t());
     int it = 0;
     quint64 g = 0;
     for (int i = 0; i < 3 || it < 10000; ++i) {
