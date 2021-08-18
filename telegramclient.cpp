@@ -215,7 +215,10 @@ void TelegramClient::socket_error(QAbstractSocket::SocketError error)
 
 void TelegramClient::sendPlainPacket(QByteArray raw)
 {
-    if (!stream) return;
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "Sending plain object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
+#endif
+
     TelegramPacket packet;
 
     writeInt64(packet, 0);
@@ -271,24 +274,21 @@ QByteArray TelegramClient::readMessage()
 void TelegramClient::handleMessage(QByteArray messageData)
 {
     if (messageData.length() < 4) return;
-    TelegramPacket packet(messageData);
+    qint32 conId = qFromLittleEndian<qint32>((uchar*) messageData.mid(0, 4).data());
 
-    QVariant conId;
-    readInt32(packet, conId);
-
-    HANDLE_METHOD method = HANDLE_METHODS.value(conId.toInt(), (HANDLE_METHOD) 0);
+    HANDLE_METHOD method = HANDLE_METHODS.value(conId, (HANDLE_METHOD) 0);
     if (!method) {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an unknown TL object ( id" << conId.toInt() << "):" << messageData.toHex();
+        qDebug() << "Got an unknown TL object ( id" << conId << "):" << messageData.toHex();
 #endif
     } else {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an known TL object ( id" << conId.toInt() << ")";
+        qDebug() << "Got an known TL object ( id" << conId << ")";
 #endif
         (this->*method)(messageData);
     }
 
-    emit handleResponse(messageData, conId.toInt());
+    emit handleResponse(messageData, conId);
 }
 
 void TelegramClient::handleResPQ(QByteArray data)
@@ -605,6 +605,11 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
     }
 
     if (raw.isEmpty()) return;
+
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "Sending MTProto object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
+#endif
+
     qint64 messageId = getNewMessageId();
     messages.insert(messageId, raw);
 
