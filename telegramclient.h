@@ -34,6 +34,7 @@ class TelegramClient : public QObject
     Q_OBJECT
 private:
     TelegramSession session;
+    //TODO network session saving (see fortune client example)
     QTcpSocket *socket;
     TelegramStream *stream;
 
