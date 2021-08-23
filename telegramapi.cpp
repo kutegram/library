@@ -68,12 +68,10 @@ void TelegramClient::handleAuthorization(QByteArray data)
     changeState(LOGGED_IN);
     sync();
 
-    updatesGetState();
-
     emit gotAuthorization();
 }
 
-void TelegramClient::updatesGetState()
+void TelegramClient::getUpdatesState()
 {
     TGOBJECT(getState, TLType::UpdatesGetStateMethod);
 

@@ -37,6 +37,8 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::AuthSentCode] = &TelegramClient::handleSentCode;
     map[TLType::AuthAuthorization] = &TelegramClient::handleAuthorization;
     map[TLType::AuthLoginToken] = &TelegramClient::handleLoginToken;
+    map[TLType::MessagesDialogs] = &TelegramClient::handleDialogs;
+    map[TLType::MessagesDialogsSlice] = &TelegramClient::handleDialogsSlice;
 
     return map;
 }
@@ -53,6 +55,15 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 void TelegramClient::changeState(State s)
 {
     state = s;
+
+    switch (s) {
+    case LOGGED_IN:
+    {
+        getUpdatesState();
+        break;
+    }
+    }
+
     emit stateChanged(s);
 }
 
@@ -105,10 +116,11 @@ void TelegramClient::stop()
 
     socket->abort();
     socket->deleteLater();
-    socket = 0;
-    stream = 0;
-    sync();
+    //socket = 0; //TODO After deletion
+    //stream = 0; //TODO After deletion
+
     changeState(STOPPED);
+    sync();
 }
 
 void TelegramClient::socket_connected()
@@ -123,6 +135,7 @@ void TelegramClient::socket_connected()
     writeUInt8(*stream, 0xEF);
 
     //If we are authorized - skip to request DC config
+    //FIXME TODO: It sends same packets every time, but not new's one, why?
     if (isAuthorized()) {
         initConnection();
         return;
@@ -180,7 +193,7 @@ void TelegramClient::socket_readyRead()
 
     if (!id.toULongLong()) {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an plain message.";
+        //qDebug() << "Got an plain message.";
 #endif
         //auth_key_id == 0: it is a plain message.
         message.skipRawBytes(8); //message_id
@@ -189,8 +202,9 @@ void TelegramClient::socket_readyRead()
         message.readRawBytes(plainData, messageLength.toInt());
     } else {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an MTProto message.";
+        //qDebug() << "Got an MTProto message.";
 #endif
+        if (state < AUTHORIZED) return;
         //auth_key_id != 0: it is a MTProto message.
         //TODO: Important checks
         //TODO: check auth key id
@@ -298,11 +312,11 @@ void TelegramClient::handleMessage(QByteArray messageData)
     HANDLE_METHOD method = HANDLE_METHODS.value(conId, (HANDLE_METHOD) 0);
     if (!method) {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an unknown TL object ( id" << conId << "):" << messageData.toHex();
+        qDebug() << "Got an unknown TL object ( id" << conId << ")";
 #endif
     } else {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an known TL object ( id" << conId << ")";
+        qDebug() << "Got a known TL object ( id" << conId << ")";
 #endif
         (this->*method)(messageData);
     }
@@ -606,6 +620,7 @@ qint32 TelegramClient::generateSequence(bool confirmed)
 
 void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 {
+    if (state < AUTHORIZED) return;
     //TODO: add timer send timeout
     while (!ignoreConfirm && !confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);

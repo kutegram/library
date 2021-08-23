@@ -59,10 +59,10 @@ private:
     qint64 getNewMessageId();
     qint32 generateSequence(bool confirmed);
     void changeState(State state);
+
 public:
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
-    //TODO telegram objects names
     void handleResPQ(QByteArray data);
     void handleServerDHParamsOk(QByteArray data);
     void handleDhGenOk(QByteArray data);
@@ -80,6 +80,8 @@ public:
     void handleLoginToken(QByteArray data);
     void handleSentCode(QByteArray data);
     void handleAuthorization(QByteArray data);
+    void handleDialogs(QByteArray data);
+    void handleDialogsSlice(QByteArray data);
 
     void initConnection();
     bool isLoggedIn();
@@ -89,11 +91,12 @@ public:
 
     State getState();
 
-    //TODO telegram methods names
     void exportLoginToken(); //TODO QR-code login
     void sendCode(QString phone_number);
     void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
-    void updatesGetState(); //TODO updates.state handle
+    void getUpdatesState(); //TODO updates.state handle
+    void getDialogs();
+
 signals:
     void handleResponse(QByteArray data, qint32 conId);
     void stateChanged(State state);
@@ -107,10 +110,14 @@ signals:
     void gotLoginToken(qint32 expires, QString tokenUrl);
     void gotSentCode(QString phone_code_hash); //TODO timeout and more params
     void gotAuthorization();
+
+    void gotDialogs();
+
 public slots:
     void start();
     void stop();
     void sync();
+
 private slots:
     void socket_connected();
     void socket_disconnected();

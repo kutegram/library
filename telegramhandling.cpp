@@ -54,7 +54,6 @@ void TelegramClient::handleMsgContainer(QByteArray data)
     QVariant var;
 
     readInt32(packet, var); //conId
-    if (var.toInt() != VECTOR_ID) return;
     readInt32(packet, var); //size
     qint32 size = var.toInt();
     QByteArray array;
@@ -130,8 +129,6 @@ void TelegramClient::handleConfig(QByteArray data)
 
     if (isLoggedIn()) {
         changeState(LOGGED_IN);
-
-        updatesGetState();
     }
 
     sync();

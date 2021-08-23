@@ -2041,10 +2041,10 @@ template <READ_METHOD R, WRITE_METHOD W> void writeTLMethodInitConnection(Telegr
     switch (obj["_"].toInt()) {
     case -1043505495:
         writeInt32(stream, obj["_"], callback);
-        writeUInt32(stream, 
+        writeUInt32(stream, obj["flags"] = (
             (!obj["proxy"].isNull()) | 
             (!obj["params"].isNull() << 1) | 
-        0, callback);
+        0), callback);
         writeInt32(stream, obj["api_id"], callback);
         writeString(stream, obj["device_model"], callback);
         writeString(stream, obj["system_version"], callback);
