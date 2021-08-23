@@ -8,10 +8,7 @@ void TelegramClient::exportLoginToken()
     exportToken["api_id"] = APP_ID;
     exportToken["api_hash"] = APP_HASH;
 
-    TelegramPacket packet;
-    writeTLMethodAuthExportLoginToken(packet, exportToken);
-
-    sendMTPacket(packet.toByteArray());
+    sendMTObject<&writeTLMethodAuthExportLoginToken>(exportToken);
 }
 
 void TelegramClient::handleLoginToken(QByteArray data)
@@ -35,10 +32,7 @@ void TelegramClient::sendCode(QString phone_number)
     TGOBJECT(codeSettings, TLType::CodeSettings);
     sendCode["settings"] = codeSettings;
 
-    TelegramPacket packet;
-    writeTLMethodAuthSendCode(packet, sendCode);
-
-    sendMTPacket(packet.toByteArray());
+    sendMTObject<&writeTLMethodAuthSendCode>(sendCode);
 }
 
 void TelegramClient::handleSentCode(QByteArray data)
@@ -59,10 +53,7 @@ void TelegramClient::signIn(QString phone_number, QString phone_code_hash, QStri
     signIn["phone_code_hash"] = phone_code_hash;
     signIn["phone_code"] = phone_code;
 
-    TelegramPacket packet;
-    writeTLMethodAuthSignIn(packet, signIn);
-
-    sendMTPacket(packet.toByteArray());
+    sendMTObject<&writeTLMethodAuthSignIn>(signIn);
 }
 
 void TelegramClient::handleAuthorization(QByteArray data)

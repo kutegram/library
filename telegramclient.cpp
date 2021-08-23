@@ -617,9 +617,7 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
         confirm.erase(confirm.begin(), confirm.begin() + count); //TODO: remove only on msgsAck recieved
         msgsAck["msg_ids"] = msgIds;
 
-        TelegramPacket ackPacket;
-        writeMTMsgsAck(ackPacket, msgsAck);
-        sendMTPacket(ackPacket.toByteArray(), true);
+        sendMTObject<&writeMTMsgsAck>(msgsAck, true);
     }
 
     if (raw.isEmpty()) return;
@@ -673,15 +671,13 @@ void TelegramClient::initConnection()
     invoke["layer"] = API_LAYER;
     invoke["query"] = initRequest;
 
-    TelegramPacket invokePacket;
-    writeTLMethodInvokeWithLayer
+    sendMTObject< &writeTLMethodInvokeWithLayer
             < &readTLMethodInitConnection
             < &readTLMethodHelpGetConfig ,
             &writeTLMethodHelpGetConfig > ,
             &writeTLMethodInitConnection
             < &readTLMethodHelpGetConfig ,
-            &writeTLMethodHelpGetConfig > >(invokePacket, invoke);
-    sendMTPacket(invokePacket.toByteArray());
+            &writeTLMethodHelpGetConfig > > >(invoke);
 }
 
 void TelegramClient::sync()

@@ -49,6 +49,7 @@ private:
     State state;
 
     //TODO send packets via objects arguments with callback or template
+    template <WRITE_METHOD W> void sendMTObject(QVariant obj, bool ignoreConfirm = false);
     void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
     void sendMessage(QByteArray raw);
@@ -106,7 +107,7 @@ signals:
 public slots:
     void start();
     void stop();
-    void sync(); //TODO session save
+    void sync();
 private slots:
     void socket_connected();
     void socket_disconnected();
@@ -114,5 +115,14 @@ private slots:
     void socket_bytesWritten(qint64 count);
     void socket_error(QAbstractSocket::SocketError error);
 };
+
+template <WRITE_METHOD W> void TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm)
+{
+    if (!W) return;
+    TelegramPacket packet;
+    (*W)(packet, obj, 0);
+
+    sendMTPacket(packet.toByteArray(), ignoreConfirm);
+}
 
 #endif // TELEGRAMCLIENT_H
