@@ -48,7 +48,7 @@ private:
 
     State state;
 
-    //TODO send packets via objects arguments with callback or template
+    //TODO gzip MTProto messages
     template <WRITE_METHOD W> void sendMTObject(QVariant obj, bool ignoreConfirm = false);
     void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
@@ -62,6 +62,7 @@ private:
 public:
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
+    //TODO telegram objects names
     void handleResPQ(QByteArray data);
     void handleServerDHParamsOk(QByteArray data);
     void handleDhGenOk(QByteArray data);
@@ -88,9 +89,11 @@ public:
 
     State getState();
 
+    //TODO telegram methods names
     void exportLoginToken(); //TODO QR-code login
     void sendCode(QString phone_number);
     void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
+    void updatesGetState(); //TODO updates.state handle
 signals:
     void handleResponse(QByteArray data, qint32 conId);
     void stateChanged(State state);
