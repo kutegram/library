@@ -57,6 +57,11 @@ void TelegramClient::changeState(State s)
     state = s;
 
     switch (s) {
+    case AUTHORIZED:
+    {
+        initConnection();
+        break;
+    }
     case LOGGED_IN:
     {
         getUpdatesState();
@@ -137,7 +142,7 @@ void TelegramClient::socket_connected()
     //If we are authorized - skip to request DC config
     //FIXME TODO: It sends same packets every time, but not new's one, why?
     if (isAuthorized()) {
-        initConnection();
+        changeState(AUTHORIZED);
         return;
     }
 
@@ -569,8 +574,6 @@ void TelegramClient::handleDhGenOk(QByteArray data)
 #endif
 
     changeState(AUTHORIZED);
-
-    initConnection();
 }
 
 //TODO: Use QSysInfo
