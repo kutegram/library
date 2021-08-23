@@ -117,6 +117,7 @@ void TelegramClient::handleRpcError(QByteArray data)
     if (rpcError["error_message"].toString() == "AUTH_KEY_UNREGISTERED") {
         stop();
         session.authKey = AuthKey();
+        session.userId = 0;
         sync();
     }
 }
@@ -124,6 +125,10 @@ void TelegramClient::handleRpcError(QByteArray data)
 void TelegramClient::handleConfig(QByteArray data)
 {
     changeState(INITED);
+
+    if (isLoggedIn()) {
+        changeState(LOGGED_IN);
+    }
 
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a config. Connection inited.";

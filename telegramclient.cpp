@@ -35,8 +35,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
 
     map[TLType::Config] = &TelegramClient::handleConfig;
     map[TLType::AuthSentCode] = &TelegramClient::handleSentCode;
-    map[TLType::Authorization] = &TelegramClient::handleAuthorization;
-
+    map[TLType::AuthAuthorization] = &TelegramClient::handleAuthorization;
     map[TLType::AuthLoginToken] = &TelegramClient::handleLoginToken;
 
     return map;
@@ -45,16 +44,21 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
 QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 QMutex lock(QMutex::Recursive);
 
-TelegramClient::TelegramClient(QObject *parent, TelegramSession sess) :
-    QObject(parent), session(sess), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED), retryId()
+TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
+    QObject(parent), session(), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED), retryId(), sessionFile(sessionId + ".session", QSettings::IniFormat, this)
 {
-
+    session.deserialize(sessionFile.value("session").toMap());
 }
 
 void TelegramClient::changeState(State s)
 {
     state = s;
     emit stateChanged(s);
+}
+
+bool TelegramClient::isLoggedIn()
+{
+    return isAuthorized() && session.userId;
 }
 
 bool TelegramClient::isAuthorized()
@@ -653,8 +657,6 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 
 void TelegramClient::initConnection()
 {
-    changeState(INITING);
-
     TGOBJECT(getDCC, TLType::HelpGetConfigMethod);
 
     TGOBJECT(initRequest, TLType::InitConnectionMethod);
@@ -684,9 +686,10 @@ void TelegramClient::initConnection()
 
 void TelegramClient::sync()
 {
-    //TODO session save
+    sessionFile.setValue("session", session.serialize());
+    //sessionFile.sync(); //TODO: do we need to call it?
 #ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << "Sync session. TODO ME.";
+    qDebug() << "Session synced.";
 #endif
 }
 

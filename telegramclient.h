@@ -8,6 +8,7 @@
 #include <QTcpSocket>
 #include <QList>
 #include <QMap>
+#include <QSettings>
 
 enum State
 {
@@ -23,10 +24,8 @@ enum State
     DH_STEP_8,
     DH_STEP_9,
     AUTHORIZED,
-    INITING,
     INITED,
-    LOGGING_IN, //TODO
-    LOGGED_IN //TODO
+    LOGGED_IN
 };
 
 class TelegramClient : public QObject
@@ -37,6 +36,7 @@ private:
     //TODO network session saving (see fortune client example)
     QTcpSocket *socket;
     TelegramStream *stream;
+    QSettings sessionFile;
 
     QByteArray nonce;
     QByteArray newNonce;
@@ -59,7 +59,7 @@ private:
     qint32 generateSequence(bool confirmed);
     void changeState(State state);
 public:
-    explicit TelegramClient(QObject *parent = 0, TelegramSession session = TelegramSession());
+    explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
     void handleResPQ(QByteArray data);
     void handleServerDHParamsOk(QByteArray data);
@@ -80,13 +80,14 @@ public:
     void handleAuthorization(QByteArray data);
 
     void initConnection();
+    bool isLoggedIn();
     bool isAuthorized();
     bool isOpened();
     bool isConnected();
 
     State getState();
 
-    void exportLoginToken();
+    void exportLoginToken(); //TODO QR-code login
     void sendCode(QString phone_number);
     void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
 signals:
@@ -100,12 +101,12 @@ signals:
     void gotRPCError(qint32 error_code, QString error_message);
 
     void gotLoginToken(qint32 expires, QString tokenUrl);
-    void gotSentCode(QString phone_code_hash);
+    void gotSentCode(QString phone_code_hash); //TODO timeout and more params
     void gotAuthorization();
 public slots:
     void start();
     void stop();
-    void sync();
+    void sync(); //TODO session save
 private slots:
     void socket_connected();
     void socket_disconnected();

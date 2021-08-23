@@ -71,9 +71,11 @@ void TelegramClient::handleAuthorization(QByteArray data)
     QVariant var;
 
     readTLAuthAuthorization(packet, var);
-    TelegramObject authorzation = var.toMap();
+    TelegramObject auth = var.toMap();
 
+    session.userId = auth["user"].toMap()["id"].toInt();
+    changeState(LOGGED_IN);
     sync();
-    //TODO save that session is authorized
+
     emit gotAuthorization();
 }

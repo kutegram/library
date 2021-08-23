@@ -35,48 +35,55 @@ QByteArray AuthKey::calcNewNonceHash(QByteArray newNonce, quint8 number)
     return hashSHA1(packet.toByteArray()).mid(4, 16);
 }
 
-TelegramSession::TelegramSession() :
-    authKey(), salt(), timeOffset(), id(), lastMessageId(), sequence()
+AuthKey& AuthKey::deserialize(QVariantMap obj)
 {
-}
-
-TelegramSession& TelegramSession::deserialize(QString hex)
-{
-    TelegramPacket packet(QByteArray::fromHex(hex.toAscii()));
-
-    QVariant var;
-    readUInt64(packet, var);
-    authKey.auxHash = var.toULongLong();
-    readUInt64(packet, var);
-    authKey.id = var.toULongLong();
-    readByteArray(packet, var);
-    authKey.key = var.toByteArray();
-    readUInt64(packet, var);
-    salt = var.toULongLong();
-    readInt32(packet, var);
-    timeOffset = var.toInt();
-    readInt64(packet, var);
-    id = var.toLongLong();
-    readInt64(packet, var);
-    lastMessageId = var.toLongLong();
-    readInt32(packet, var);
-    sequence = var.toInt();
+    key = obj["key"].toByteArray();
+    id = obj["id"].toULongLong();
+    auxHash = obj["auxHash"].toULongLong();
 
     return *this;
 }
 
-QString TelegramSession::serialize()
+QVariantMap AuthKey::serialize()
 {
-    TelegramPacket packet;
+    QVariantMap obj;
 
-    writeUInt64(packet, authKey.auxHash);
-    writeUInt64(packet, authKey.id);
-    writeByteArray(packet, authKey.key);
-    writeUInt64(packet, salt);
-    writeInt32(packet, timeOffset);
-    writeInt64(packet, id);
-    writeInt64(packet, lastMessageId);
-    writeInt32(packet, sequence);
+    obj["key"] = key;
+    obj["id"] = id;
+    obj["auxHash"] = auxHash;
 
-    return QString::fromAscii(packet.toByteArray().toHex());
+    return obj;
+}
+
+TelegramSession::TelegramSession() :
+    authKey(), salt(), timeOffset(), id(), lastMessageId(), sequence(), userId()
+{
+}
+
+TelegramSession& TelegramSession::deserialize(QVariantMap obj)
+{
+    authKey.deserialize(obj["authKey"].toMap());
+    salt = obj["salt"].toULongLong();
+    timeOffset = obj["timeOffset"].toInt();
+    id = obj["id"].toLongLong();
+    lastMessageId = obj["lastMessageId"].toLongLong();
+    sequence = obj["sequence"].toInt();
+    userId = obj["userId"].toInt();
+
+    return *this;
+}
+
+QVariantMap TelegramSession::serialize()
+{
+    QVariantMap obj;
+
+    obj["authKey"] = authKey.serialize();
+    obj["salt"] = salt;
+    obj["timeOffset"] = timeOffset;
+    obj["id"] = id;
+    obj["lastMessageId"] = lastMessageId;
+    obj["sequence"] = sequence;
+    obj["userId"] = userId;
+
+    return obj;
 }
