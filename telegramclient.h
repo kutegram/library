@@ -9,6 +9,7 @@
 #include <QList>
 #include <QMap>
 #include <QSettings>
+#include "tlmessages.h"
 
 enum State
 {
@@ -111,7 +112,7 @@ signals:
     void gotSentCode(QString phone_code_hash); //TODO timeout and more params
     void gotAuthorization();
 
-    void gotDialogs();
+    void gotDialogs(qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
 
 public slots:
     void start();

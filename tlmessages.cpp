@@ -2,10 +2,47 @@
 
 #include "telegramclient.h"
 #include "tlschema.h"
+#include <QList>
 
 #ifndef QT_NO_DEBUG_OUTPUT
 #include <QtDebug>
 #endif
+
+TLPeer::TLPeer(QVariantMap var)
+{
+    //TODO
+}
+
+TLDialog::TLDialog(QVariantMap var) :
+    peer(var)
+{
+    //TODO
+}
+
+TLChat::TLChat(QVariantMap var)
+{
+    //TODO
+}
+
+TLChannel::TLChannel(QVariantMap var)
+{
+    //TODO
+}
+
+TLMessage::TLMessage(QVariantMap var)
+{
+    //TODO
+}
+
+TLInputPeer::TLInputPeer(QVariantMap var)
+{
+    //TODO
+}
+
+TLUser::TLUser(QVariantMap var)
+{
+    //TODO
+}
 
 void TelegramClient::getDialogs()
 {
@@ -28,18 +65,66 @@ void TelegramClient::handleDialogs(QByteArray data)
     QVariant var;
 
     readTLMessagesDialogs(packet, var);
-    TelegramObject dialogsObject = var.toMap();
+    TelegramObject obj = var.toMap();
 
-    TelegramVector dialogs = dialogsObject["dialogs"].toList();
-    //TODO
-#ifndef QT_NO_DEBUG_OUTPUT
-    for (qint32 i = 0; i < dialogs.size(); ++i)  qDebug() << dialogs[i].toMap()["folder_id"].toInt();
-#endif
+    TelegramVector vector = obj["dialogs"].toList();
+    QList<TLDialog> dialogs;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        dialogs << TLDialog(vector[i].toMap());
+    }
 
-    emit gotDialogs();
+    vector = obj["messages"].toList();
+    QList<TLMessage> messages;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        messages << TLMessage(vector[i].toMap());
+    }
+
+    vector = obj["chats"].toList();
+    QList<TLChat> chats;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        chats << TLChat(vector[i].toMap());
+    }
+
+    vector = obj["users"].toList();
+    QList<TLUser> users;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        users << TLUser(vector[i].toMap());
+    }
+
+    emit gotDialogs(dialogs.size(), dialogs, messages, chats, users);
 }
 
 void TelegramClient::handleDialogsSlice(QByteArray data)
 {
-    handleDialogs(data);
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLMessagesDialogs(packet, var);
+    TelegramObject obj = var.toMap();
+
+    TelegramVector vector = obj["dialogs"].toList();
+    QList<TLDialog> dialogs;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        dialogs << TLDialog(vector[i].toMap());
+    }
+
+    vector = obj["messages"].toList();
+    QList<TLMessage> messages;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        messages << TLMessage(vector[i].toMap());
+    }
+
+    vector = obj["chats"].toList();
+    QList<TLChat> chats;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        chats << TLChat(vector[i].toMap());
+    }
+
+    vector = obj["users"].toList();
+    QList<TLUser> users;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        users << TLUser(vector[i].toMap());
+    }
+
+    emit gotDialogs(qMax(obj["count"].toInt(), dialogs.size()), dialogs, messages, chats, users);
 }

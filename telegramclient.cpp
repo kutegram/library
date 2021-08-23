@@ -627,14 +627,15 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
     //TODO: add timer send timeout
     while (!ignoreConfirm && !confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);
+
         TelegramVector msgIds;
         qint32 count = qMin(confirm.size(), 8192);
         for (qint32 i = 0; i < count; ++i) {
             msgIds << confirm[i];
         }
         confirm.erase(confirm.begin(), confirm.begin() + count); //TODO: remove only on msgsAck recieved
-        msgsAck["msg_ids"] = msgIds;
 
+        msgsAck["msg_ids"] = msgIds;
         sendMTObject<&writeMTMsgsAck>(msgsAck, true);
     }
 
