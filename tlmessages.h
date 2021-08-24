@@ -2,9 +2,13 @@
 #define TLMESSAGES_H
 
 #include <QVariant>
+#include "tlschema.h"
 
 struct TLPeer
 {
+    qint32 id;
+    TLType::Types type;
+
     TLPeer(QVariantMap var);
 };
 

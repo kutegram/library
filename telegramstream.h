@@ -31,11 +31,9 @@ class TelegramStream : public QObject
 {
     Q_OBJECT
 public:
-    QByteArray *array;
-    QDataStream *stream;
+    QByteArray array;
+    QDataStream stream;
     explicit TelegramStream(QByteArray input = QByteArray());
-    explicit TelegramStream(QIODevice *parent);
-    ~TelegramStream();
 
     void skipRawBytes(qint32 i);
     void readRawBytes(QByteArray &i, qint32 count);

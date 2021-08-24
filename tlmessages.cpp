@@ -8,15 +8,30 @@
 #include <QtDebug>
 #endif
 
-TLPeer::TLPeer(QVariantMap var)
+TLPeer::TLPeer(QVariantMap var) :
+    id(), type()
 {
-    //TODO
+    switch (GETID(var)) {
+    case TLType::PeerUser:
+        type = TLType::PeerUser;
+        id = var["user_id"].toInt();
+        break;
+    case TLType::PeerChat:
+        type = TLType::PeerChat;
+        id = var["chat_id"].toInt();
+        break;
+    case TLType::PeerChannel:
+        type = TLType::PeerChannel;
+        id = var["channel_id"].toInt();
+        break;
+    }
 }
 
 TLDialog::TLDialog(QVariantMap var) :
-    peer(var)
+    peer(var["peer"].toMap()), pinned(), topMessage()
 {
-    //TODO
+    pinned = (var["flags"].toInt() & 4);
+    topMessage = var["top_message"].toInt();
 }
 
 TLChat::TLChat(QVariantMap var)

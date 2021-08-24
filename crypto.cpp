@@ -30,8 +30,8 @@ QByteArray randomBytes(qint32 size)
 
     qsrand(QDateTime::currentDateTime().toUTC().toTime_t());
     array.reserve(size);
-    while (array.length() < size) array.append((quint8) (qrand() % 256));
     array.resize(size);
+    while (array.length() < size) array.append((quint8) (qrand() % 256));
 
     return array;
 }

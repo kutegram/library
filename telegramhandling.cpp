@@ -42,6 +42,7 @@ void TelegramClient::handleGzipPacked(QByteArray data)
     unzipper.Put((const byte*) data.constData(), data.size(), true);
     unzipper.MessageEnd();
 
+    data.reserve(unzipper.MaxRetrievable());
     data.resize(unzipper.MaxRetrievable());
     unzipper.Get((byte*) data.data(), data.size());
 

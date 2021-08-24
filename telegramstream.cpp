@@ -1,91 +1,71 @@
 #include "telegramstream.h"
 
 TelegramStream::TelegramStream(QByteArray input) :
-    QObject(0), array(new QByteArray(input)), stream(new QDataStream(array, QIODevice::ReadWrite))
+    QObject(0), array(input), stream(&array, QIODevice::ReadWrite)
 {
-    stream->setByteOrder(QDataStream::LittleEndian);
-}
-
-TelegramStream::TelegramStream(QIODevice *parent) :
-    QObject(parent), array(0), stream(new QDataStream(parent))
-{
-    stream->setByteOrder(QDataStream::LittleEndian);
-}
-
-TelegramStream::~TelegramStream()
-{
-    if (stream) delete stream;
-    if (array) delete array;
+    stream.setByteOrder(QDataStream::LittleEndian);
 }
 
 void TelegramStream::skipRawBytes(qint32 i)
 {
-    stream->skipRawData(i);
+    stream.skipRawData(i);
 }
 
 void TelegramStream::writeRawBytes(QByteArray i)
 {
-    stream->writeRawData(i.constData(), i.length());
+    stream.writeRawData(i.constData(), i.length());
 }
 
 void TelegramStream::readRawBytes(QByteArray &i, qint32 count)
 {
+    i.reserve(count);
     i.resize(count);
-    qint32 readedTotal = 0;
-    while (count > 0) {
-        //TODO: leave if no data for long time
-        qint32 readed = stream->readRawData(i.data() + readedTotal, count);
-        if (readed == -1) break;
-        else {
-            readedTotal += readed;
-            count -= readed;
-        }
-    }
+    stream.readRawData(i.data(), count);
 }
 
 QByteArray TelegramStream::toByteArray()
 {
-    return (array ? QByteArray(*array) : QByteArray());
+    return array;
 }
 
 void TelegramStream::setByteOrder(QDataStream::ByteOrder order)
 {
-    stream->setByteOrder(order);
+    stream.setByteOrder(order);
 }
 
 void writeUInt8(TelegramStream& stream, QVariant i, void* callback)
 {
-    *(stream.stream) << (quint8) i.toUInt();
+    stream.stream << (quint8) i.toUInt();
 }
 
 void writeUInt32(TelegramStream& stream, QVariant i, void* callback)
 {
-    *(stream.stream) << i.toUInt();
+    stream.stream << i.toUInt();
 }
 
 void writeUInt64(TelegramStream& stream, QVariant i, void* callback)
 {
-    *(stream.stream) << i.toULongLong();
+    stream.stream << i.toULongLong();
 }
 
 void writeInt32(TelegramStream &stream, QVariant i, void *callback)
 {
-    *(stream.stream) << i.toInt();
+    stream.stream << i.toInt();
 }
 
 void writeInt64(TelegramStream &stream, QVariant i, void *callback)
 {
-    *(stream.stream) << i.toLongLong();
+    stream.stream << i.toLongLong();
 }
 
 void writeDouble(TelegramStream &stream, QVariant i, void *callback)
 {
-    *(stream.stream) << i.toDouble();
+    stream.stream << i.toDouble();
 }
 
 void writeBool(TelegramStream &stream, QVariant i, void *callback)
 {
-    *(stream.stream) << (i.toBool() ? BOOL_TRUE : BOOL_FALSE);
+    stream.stream << (i.toBool() ? BOOL_TRUE : BOOL_FALSE);
 }
 
 void writeString(TelegramStream &stream, QVariant i, void *callback)
@@ -118,6 +98,7 @@ void writeByteArray(TelegramStream &stream, QVariant i, void *callback)
 void writeInt128(TelegramStream &stream, QVariant i, void *callback)
 {
     QByteArray array = i.toByteArray();
+    array.reserve(INT128_BYTES);
     array.resize(INT128_BYTES);
     stream.writeRawBytes(array);
 }
@@ -125,6 +106,7 @@ void writeInt128(TelegramStream &stream, QVariant i, void *callback)
 void writeInt256(TelegramStream &stream, QVariant i, void *callback)
 {
     QByteArray array = i.toByteArray();
+    array.reserve(INT256_BYTES);
     array.resize(INT256_BYTES);
     stream.writeRawBytes(array);
 }
@@ -142,49 +124,49 @@ void writeVector(TelegramStream &stream, QVariant i, void *callback)
 void readUInt8(TelegramStream &stream, QVariant &i, void *callback)
 {
     quint8 var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = quint32(var);
 }
 
 void readUInt32(TelegramStream &stream, QVariant &i, void *callback)
 {
     quint32 var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = var;
 }
 
 void readUInt64(TelegramStream &stream, QVariant &i, void *callback)
 {
     quint64 var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = var;
 }
 
 void readInt32(TelegramStream &stream, QVariant &i, void *callback)
 {
     qint32 var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = var;
 }
 
 void readInt64(TelegramStream &stream, QVariant &i, void *callback)
 {
     qint64 var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = var;
 }
 
 void readDouble(TelegramStream &stream, QVariant &i, void *callback)
 {
     double var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = var;
 }
 
 void readBool(TelegramStream &stream, QVariant &i, void *callback)
 {
     qint32 var;
-    *(stream.stream) >> var;
+    stream.stream >> var;
     i = (var == BOOL_TRUE);
 }
 

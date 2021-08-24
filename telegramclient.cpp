@@ -11,7 +11,6 @@
 #include <QtCore>
 #include "tlschema.h"
 #include <QApplication>
-#include <QMutex>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
 
@@ -44,10 +43,9 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
 }
 
 QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
-QMutex lock(QMutex::Recursive);
 
 TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
-    QObject(parent), session(), socket(0), stream(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED), retryId(), sessionFile(sessionId + ".session", QSettings::IniFormat, this)
+    QObject(parent), session(), socket(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED), retryId(), sessionFile(sessionId + ".session", QSettings::IniFormat, this), readMutex(QMutex::Recursive), msgMutex(QMutex::Recursive)
 {
     session.deserialize(sessionFile.value("session").toMap());
 }
@@ -94,7 +92,7 @@ State TelegramClient::getState()
 
 bool TelegramClient::isConnected()
 {
-    return isOpened() && isAuthorized() && state == INITED;
+    return isOpened() && isAuthorized() && state > AUTHORIZED;
 }
 
 void TelegramClient::start()
@@ -110,7 +108,6 @@ void TelegramClient::start()
     connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
     connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
 
-    stream = new TelegramStream(socket);
     changeState(CONNECTING);
     socket->connectToHost(DC_IP, DC_PORT);
 }
@@ -120,9 +117,9 @@ void TelegramClient::stop()
     if (!socket) return;
 
     socket->abort();
+    socket->waitForDisconnected(2000);
     socket->deleteLater();
-    //socket = 0; //TODO After deletion
-    //stream = 0; //TODO After deletion
+    socket = 0; //TODO After deletion
 
     changeState(STOPPED);
     sync();
@@ -130,17 +127,18 @@ void TelegramClient::stop()
 
 void TelegramClient::socket_connected()
 {
+    if (!socket) return;
+
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket was connected to" << socket->peerName() << ":" << socket->peerPort();
 #endif
 
-    if (!stream) return;
-
     //Init MTProto transport
-    writeUInt8(*stream, 0xEF);
+    QDataStream stream(socket);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << 0xeeeeeeee;
 
     //If we are authorized - skip to request DC config
-    //FIXME TODO: It sends same packets every time, but not new's one, why?
     if (isAuthorized()) {
         changeState(AUTHORIZED);
         return;
@@ -173,66 +171,75 @@ void TelegramClient::socket_readyRead()
     qDebug() << "Socket is ready to read";
 #endif
 
-    //Read message
-    QByteArray messageArray = readMessage();
-#ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << "Socket was" << messageArray.length() << "byte(s) readed";
-#endif
-    TelegramPacket message(messageArray);
+    readMutex.lock();
 
-    QVariant id;
-
-    //If length of message is <= 4, it is an negative integer error.
-    if (messageArray.length() <= 4) {
-        readInt32(message, id);
+    while (socket->bytesAvailable()) {
 #ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an message error:" << id.toInt();
+        qDebug() << "Bytes are avaliable, trying to read";
 #endif
-        emit gotMTError(id.toInt());
-        return;
+
+        //Read message
+        QByteArray messageArray = readMessage();
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "Socket was" << messageArray.length() << "byte(s) readed";
+#endif
+
+        TelegramPacket message(messageArray);
+
+        QVariant id;
+
+        //If length of message is <= 4, it is an negative integer error.
+        if (messageArray.length() <= 4) {
+            readInt32(message, id);
+#ifndef QT_NO_DEBUG_OUTPUT
+            qDebug() << "Got an message error:" << id.toInt();
+#endif
+            emit gotMTError(id.toInt());
+            return;
+        }
+
+        //Reading message id
+        readUInt64(message, id);
+        QByteArray plainData;
+
+        if (!id.toULongLong()) {
+#ifndef QT_NO_DEBUG_OUTPUT
+            //qDebug() << "Got an plain message.";
+#endif
+            //auth_key_id == 0: it is a plain message.
+            readInt64(message, id); //message_id
+            readInt32(message, id);
+            message.readRawBytes(plainData, id.toInt());
+        } else {
+#ifndef QT_NO_DEBUG_OUTPUT
+            //qDebug() << "Got an MTProto message.";
+#endif
+            if (state < AUTHORIZED) return;
+            //auth_key_id != 0: it is a MTProto message.
+            //TODO: Important checks
+            //TODO: check auth key id
+            //TODO: check msg_key correctness
+            //TODO: add to confirmation / confirmation timer
+
+            QByteArray messageKey;
+            message.readRawBytes(messageKey, 16);
+            QByteArray keyIv;
+            QByteArray keyData = calcEncryptionKey(session.authKey.key, messageKey, keyIv, false);
+            //TODO: NB: after decryption, msg_key must be equal to SHA-256 of data thus obtained.
+            TelegramStream messagePlain(decryptAES256IGE(messageArray.mid(24), keyIv, keyData));
+            readUInt64(messagePlain, id); //remoteSalt
+            readUInt64(messagePlain, id); //remoteId
+            readInt64(messagePlain, id); //remoteMessageId
+            confirm.append(id.toLongLong());
+            readInt32(messagePlain, id); //remoteSequence
+            readInt32(messagePlain, id); //messageLength
+            messagePlain.readRawBytes(plainData, id.toInt());
+        }
+
+        handleMessage(plainData);
     }
 
-    //Reading message id
-    readUInt64(message, id);
-    QByteArray plainData;
-
-    if (!id.toULongLong()) {
-#ifndef QT_NO_DEBUG_OUTPUT
-        //qDebug() << "Got an plain message.";
-#endif
-        //auth_key_id == 0: it is a plain message.
-        message.skipRawBytes(8); //message_id
-        QVariant messageLength;
-        readInt32(message, messageLength);
-        message.readRawBytes(plainData, messageLength.toInt());
-    } else {
-#ifndef QT_NO_DEBUG_OUTPUT
-        //qDebug() << "Got an MTProto message.";
-#endif
-        if (state < AUTHORIZED) return;
-        //auth_key_id != 0: it is a MTProto message.
-        //TODO: Important checks
-        //TODO: check auth key id
-        //TODO: check msg_key correctness
-        //TODO: add to confirmation / confirmation timer
-
-        QByteArray messageKey;
-        message.readRawBytes(messageKey, 16);
-        QByteArray keyIv;
-        QByteArray keyData = calcEncryptionKey(session.authKey.key, messageKey, keyIv, false);
-        //TODO: NB: after decryption, msg_key must be equal to SHA-256 of data thus obtained.
-        TelegramStream messagePlain(decryptAES256IGE(messageArray.mid(24), keyIv, keyData));
-        QVariant var;
-        readUInt64(messagePlain, var); //remoteSalt
-        readUInt64(messagePlain, var); //remoteId
-        readInt64(messagePlain, var); //remoteMessageId
-        confirm.append(var.toLongLong());
-        readInt32(messagePlain, var); //remoteSequence
-        readInt32(messagePlain, var); //messageLength
-        messagePlain.readRawBytes(plainData, var.toInt());
-    }
-
-    handleMessage(plainData);
+    readMutex.unlock();
 }
 
 void TelegramClient::socket_bytesWritten(qint64 count)
@@ -269,44 +276,42 @@ void TelegramClient::sendPlainPacket(QByteArray raw)
 
 void TelegramClient::sendMessage(QByteArray raw)
 {
-    if (!stream) return;
-    TelegramPacket packet;
+    if (!socket) return;
 
-    qint32 length = raw.length() / 4;
-    if (length >= 127) {
-        writeUInt8(packet, 127);
-        writeUInt8(packet, (length & 0xFF));
-        writeUInt8(packet, ((length >> 8) & 0xFF));
-        writeUInt8(packet, ((length >> 16) & 0xFF));
-    } else {
-        writeUInt8(packet, length);
-    }
+    QDataStream stream(socket);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    stream << raw.length();
 
-    packet.writeRawBytes(raw);
-
-    stream->writeRawBytes(packet.toByteArray());
+    socket->write(raw);
 }
 
 QByteArray TelegramClient::readMessage()
 {
-    if (!stream) return QByteArray();
+    if (!socket || !socket->bytesAvailable()) return QByteArray();
 
-    QVariant var;
-    readUInt8(*stream, var);
+    QDataStream stream(socket);
+    stream.setByteOrder(QDataStream::LittleEndian);
+    qint32 length;
+    stream >> length;
 
-    qint32 length = var.toInt();
-    if (length >= 127) {
-        readUInt8(*stream, var);
-        length = var.toInt();
-        readUInt8(*stream, var);
-        length += (var.toInt() << 8);
-        readUInt8(*stream, var);
-        length += (var.toInt() << 16);
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket->bytesAvailable() << "/" << length << ")";
+#endif
+
+    QByteArray i;
+    i.reserve(length);
+    i.resize(length);
+
+    qint32 total = 0;
+    while (length > 0) {
+        qint32 readed = socket->read(i.data() + total, length);
+        if (readed < 0) return QByteArray();
+        if (!readed) socket->waitForReadyRead();
+        total += readed;
+        length -= readed;
     }
 
-    QByteArray array;
-    stream->readRawBytes(array, length * 4);
-    return array;
+    return i;
 }
 
 void TelegramClient::handleMessage(QByteArray messageData)
@@ -348,7 +353,7 @@ void TelegramClient::handleResPQ(QByteArray data)
 
     serverNonce = resPQ["server_nonce"].toByteArray();
 
-    static QList<DHKey> keychain = QList<DHKey>() //<< DHKey("be6a71558ee577ff03023cfa17aab4e6c86383cff8a7ad38edb9fafe6f323f2d5106cbc8cafb83b869cffd1ccf121cd743d509e589e68765c96601e813dc5b9dfc4be415c7a6526132d0035ca33d6d6075d4f535122a1cdfe017041f1088d1419f65c8e5490ee613e16dbf662698c0f54870f0475fa893fc41eb55b08ff1ac211bc045ded31be27d12c96d8d3cfc6a7ae8aa50bf2ee0f30ed507cc2581e3dec56de94f5dc0a7abee0be990b893f2887bd2c6310a1e0a9e3e38bd34fded2541508dc102a9c9b4c95effd9dd2dfe96c29be647d6c69d66ca500843cfaed6e440196f1dbe0e2e22163c61ca48c79116fa77216726749a976a1c4b0944b5121e8c01", 6491968696586960280LL)
+    QList<DHKey> keychain = QList<DHKey>() //<< DHKey("be6a71558ee577ff03023cfa17aab4e6c86383cff8a7ad38edb9fafe6f323f2d5106cbc8cafb83b869cffd1ccf121cd743d509e589e68765c96601e813dc5b9dfc4be415c7a6526132d0035ca33d6d6075d4f535122a1cdfe017041f1088d1419f65c8e5490ee613e16dbf662698c0f54870f0475fa893fc41eb55b08ff1ac211bc045ded31be27d12c96d8d3cfc6a7ae8aa50bf2ee0f30ed507cc2581e3dec56de94f5dc0a7abee0be990b893f2887bd2c6310a1e0a9e3e38bd34fded2541508dc102a9c9b4c95effd9dd2dfe96c29be647d6c69d66ca500843cfaed6e440196f1dbe0e2e22163c61ca48c79116fa77216726749a976a1c4b0944b5121e8c01", 6491968696586960280LL)
             //<< DHKey("b3f762b739be98f343eb1921cf0148cfa27ff7af02b6471213fed9daa0098976e667750324f1abcea4c31e43b7d11f1579133f2b3d9fe27474e462058884e5e1b123be9cbbc6a443b2925c08520e7325e6f1a6d50e117eb61ea49d2534c8bb4d2ae4153fabe832b9edf4c5755fdd8b19940b81d1d96cf433d19e6a22968a85dc80f0312f596bd2530c1cfb28b5fe019ac9bc25cd9c2a5d8a0f3a1c0c79bcca524d315b5e21b5c26b46babe3d75d06d1cd33329ec782a0f22891ed1db42a1d6c0dea431428bc4d7aabdcf3e0eb6fda4e23eb7733e7727e9a1915580796c55188d2596d2665ad1182ba7abf15aaa5a8b779ea996317a20ae044b820bff35b6e8a1", -5859577972006586033LL)
             //<< DHKey("bdf2c77d81f6afd47bd30f29ac76e55adfe70e487e5e48297e5a9055c9c07d2b93b4ed3994d3eca5098bf18d978d54f8b7c713eb10247607e69af9ef44f38e28f8b439f257a11572945cc0406fe3f37bb92b79112db69eedf2dc71584a661638ea5becb9e23585074b80d57d9f5710dd30d2da940e0ada2f1b878397dc1a72b5ce2531b6f7dd158e09c828d03450ca0ff8a174deacebcaa22dde84ef66ad370f259d18af806638012da0ca4a70baa83d9c158f3552bc9158e69bf332a45809e1c36905a5caa12348dd57941a482131be7b2355a5f4635374f3bd3ddf5ff925bf4809ee27c1e67d9120c5fe08a9de458b1b4a3c5d0a428437f2beca81f4e2d5ff", 1562291298945373506LL)
             //<< DHKey("aeec36c8ffc109cb099624685b97815415657bd76d8c9c3e398103d7ad16c9bba6f525ed0412d7ae2c2de2b44e77d72cbf4b7438709a4e646a05c43427c7f184debf72947519680e651500890c6832796dd11f772c25ff8f576755afe055b0a3752c696eb7d8da0d8be1faf38c9bdd97ce0a77d3916230c4032167100edd0f9e7a3a9b602d04367b689536af0d64b613ccba7962939d3b57682beb6dae5b608130b2e52aca78ba023cf6ce806b1dc49c72cf928a7199d22e3d7ac84e47bc9427d0236945d10dbd15177bab413fbf0edfda09f014c7a7da088dde9759702ca760af2b8e4e97cc055c617bd74c3d97008635b98dc4d621b4891da9fb0473047927", 847625836280919973LL)
@@ -604,21 +609,22 @@ QString osName()
 
 qint64 TelegramClient::getNewMessageId()
 {
-    lock.lock();
+    msgMutex.lock();
     qint64 time = QDateTime::currentDateTime().toUTC().toTime_t();
     qint64 newMessageId = ((time + session.timeOffset) << 32) | ((time % 1000) << 22);
 
     if (session.lastMessageId >= newMessageId) newMessageId = session.lastMessageId + 4;
     session.lastMessageId = newMessageId;
-    lock.unlock();
+    msgMutex.unlock();
     return newMessageId;
 }
 
 qint32 TelegramClient::generateSequence(bool confirmed)
 {
-    lock.lock();
-    return confirmed ? session.sequence++ * 2 + 1 : session.sequence * 2;
-    lock.unlock();
+    msgMutex.lock();
+    qint32 result = confirmed ? session.sequence++ * 2 + 1 : session.sequence * 2;
+    msgMutex.unlock();
+    return result;
 }
 
 void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)

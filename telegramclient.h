@@ -10,6 +10,7 @@
 #include <QMap>
 #include <QSettings>
 #include "tlmessages.h"
+#include <QMutex>
 
 enum State
 {
@@ -36,7 +37,6 @@ private:
     TelegramSession session;
     //TODO network session saving (see fortune client example)
     QTcpSocket *socket;
-    TelegramStream *stream;
     QSettings sessionFile;
 
     QByteArray nonce;
@@ -49,7 +49,10 @@ private:
 
     State state;
 
-    //TODO gzip MTProto messages
+    QMutex readMutex;
+    QMutex msgMutex;
+
+    //TODO gzip send MTProto messages
     template <WRITE_METHOD W> void sendMTObject(QVariant obj, bool ignoreConfirm = false);
     void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
