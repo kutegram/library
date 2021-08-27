@@ -27,6 +27,7 @@ struct TLChat
     TLType::Types type;
     qint32 id;
     QString title;
+    qint64 accessHash;
 
     TLChat(QVariantMap var = QVariantMap());
 };
@@ -35,13 +36,23 @@ struct TLMessage
 {
     TLType::Types type;
     qint32 id;
+    qint32 date;
+    TLPeer peer;
 
     TLMessage(QVariantMap var = QVariantMap());
 };
 
 struct TLInputPeer
 {
+    TLType::Types type;
+    qint32 id;
+    qint32 messageId;
+    qint64 accessHash;
+    QVariantMap peer;
+
+    TLInputPeer(TLPeer p, qint64 aH = 0);
     TLInputPeer(QVariantMap var = QVariantMap());
+    QVariantMap serialize();
 };
 
 struct TLUser
@@ -52,6 +63,7 @@ struct TLUser
     QString firstName;
     QString lastName;
     QString username;
+    qint64 accessHash;
 
     TLUser(QVariantMap var = QVariantMap());
 };

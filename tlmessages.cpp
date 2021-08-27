@@ -37,21 +37,117 @@ TLDialog::TLDialog(QVariantMap var) :
 TLChat::TLChat(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
-    title(var["title"].toString())
+    title(var["title"].toString()),
+    accessHash(var["access_hash"].toLongLong())
 {
 
 }
 
 TLMessage::TLMessage(QVariantMap var) :
     type((TLType::Types) GETID(var)),
-    id(var["id"].toInt())
+    id(var["id"].toInt()),
+    date(var["date"].toInt()),
+    peer(var["peer_id"].toMap())
 {
 
 }
 
-TLInputPeer::TLInputPeer(QVariantMap var)
+TLInputPeer::TLInputPeer(TLPeer p, qint64 aH) :
+    type(),
+    id(),
+    messageId(),
+    accessHash(),
+    peer()
 {
-    //TODO
+    switch (p.type) {
+    case TLType::PeerChannel:
+        type = TLType::InputPeerChannel;
+        id = p.id;
+        accessHash = aH;
+        break;
+    case TLType::PeerUser:
+        type = TLType::InputPeerUser;
+        id = p.id;
+        accessHash = aH;
+        break;
+    case TLType::PeerChat:
+        type = TLType::InputPeerChat;
+        id = p.id;
+        break;
+    default:
+        type = TLType::InputPeerEmpty;
+        break;
+    }
+}
+
+TLInputPeer::TLInputPeer(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    id(),
+    messageId(var["msg_id"].toLongLong()),
+    accessHash(var["access_hash"].toLongLong()),
+    peer(var["peer"].toMap())
+{
+    switch (GETID(var)) {
+    case TLType::InputPeerChat:
+        id = var["chat_id"].toInt();
+        break;
+    case TLType::InputPeerUser:
+    case TLType::InputPeerUserFromMessage:
+        id = var["user_id"].toInt();
+        break;
+    case TLType::InputPeerChannel:
+    case TLType::InputPeerChannelFromMessage:
+        id = var["channel_id"].toInt();
+        break;
+    }
+}
+
+QVariantMap TLInputPeer::serialize()
+{
+    TGOBJECT(obj, type);
+
+    switch (type) {
+    case TLType::InputPeerChannelFromMessage:
+    {
+        obj["channel_id"] = id;
+        obj["msg_id"] = messageId;
+        obj["peer"] = peer;
+        return obj;
+    }
+    case TLType::InputPeerUserFromMessage:
+    {
+        obj["user_id"] = id;
+        obj["msg_id"] = messageId;
+        obj["peer"] = peer;
+        return obj;
+    }
+    case TLType::InputPeerChannel:
+    {
+        obj["channel_id"] = id;
+        obj["access_hash"] = accessHash;
+        return obj;
+    }
+    case TLType::InputPeerUser:
+    {
+        obj["user_id"] = id;
+        obj["access_hash"] = accessHash;
+        return obj;
+    }
+    case TLType::InputPeerChat:
+    {
+        obj["chat_id"] = id;
+        return obj;
+    }
+    case TLType::InputPeerSelf:
+    {
+        return obj;
+    }
+    default:
+    {
+        TGOBJECT(empty, TLType::InputPeerEmpty);
+        return empty;
+    }
+    }
 }
 
 TLUser::TLUser(QVariantMap var) :
@@ -60,22 +156,22 @@ TLUser::TLUser(QVariantMap var) :
     self(var["flags"].toInt() & 1024),
     firstName(var["first_name"].toString()),
     lastName(var["last_name"].toString()),
-    username(var["username"].toString())
+    username(var["username"].toString()),
+    accessHash(var["access_hash"].toLongLong())
 {
 
 }
 
-void TelegramClient::getDialogs()
+void TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TLInputPeer offsetPeer, qint32 limit)
 {
     TGOBJECT(getDialogs, TLType::MessagesGetDialogsMethod);
 
     //getDialogs["exclude_pinned"] = true;
     getDialogs["folder_id"] = 0; //0 for main list, 1 for archived chats
-
-    TGOBJECT(offsetPeer, TLType::InputPeerEmpty);
-
-    getDialogs["offset_peer"] = offsetPeer;
-    getDialogs["limit"] = 40;
+    getDialogs["offset_date"] = offsetDate;
+    getDialogs["offset_id"] = offsetId;
+    getDialogs["offset_peer"] = offsetPeer.serialize();
+    getDialogs["limit"] = limit;
 
     sendMTObject< &writeTLMethodMessagesGetDialogs >(getDialogs);
 }
@@ -112,7 +208,7 @@ void TelegramClient::handleDialogs(QByteArray data)
         users << TLUser(vector[i].toMap());
     }
 
-    emit gotDialogs(dialogs.size(), dialogs, messages, chats, users);
+    emit gotDialogs(0, dialogs, messages, chats, users);
 }
 
 void TelegramClient::handleDialogsSlice(QByteArray data)
@@ -147,5 +243,5 @@ void TelegramClient::handleDialogsSlice(QByteArray data)
         users << TLUser(vector[i].toMap());
     }
 
-    emit gotDialogs(qMax(obj["count"].toInt(), dialogs.size()), dialogs, messages, chats, users);
+    emit gotDialogs(obj["count"].toInt(), dialogs, messages, chats, users);
 }
