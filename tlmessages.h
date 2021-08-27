@@ -6,20 +6,20 @@
 
 struct TLPeer
 {
-    qint32 id;
     TLType::Types type;
+    qint32 id;
 
-    TLPeer(QVariantMap var);
+    TLPeer(QVariantMap var = QVariantMap());
 };
 
 struct TLDialog
 {
+    TLType::Types type;
     TLPeer peer;
     bool pinned;
     qint32 topMessage;
-    TLType::Types type;
 
-    TLDialog(QVariantMap var);
+    TLDialog(QVariantMap var = QVariantMap());
 };
 
 struct TLChat
@@ -28,17 +28,20 @@ struct TLChat
     qint32 id;
     QString title;
 
-    TLChat(QVariantMap var);
+    TLChat(QVariantMap var = QVariantMap());
 };
 
 struct TLMessage
 {
-    TLMessage(QVariantMap var);
+    TLType::Types type;
+    qint32 id;
+
+    TLMessage(QVariantMap var = QVariantMap());
 };
 
 struct TLInputPeer
 {
-    TLInputPeer(QVariantMap var);
+    TLInputPeer(QVariantMap var = QVariantMap());
 };
 
 struct TLUser
@@ -50,7 +53,7 @@ struct TLUser
     QString lastName;
     QString username;
 
-    TLUser(QVariantMap var);
+    TLUser(QVariantMap var = QVariantMap());
 };
 
 #endif // TLMESSAGES_H

@@ -9,8 +9,8 @@
 #endif
 
 TLPeer::TLPeer(QVariantMap var) :
-    id(),
-    type((TLType::Types) GETID(var))
+    type((TLType::Types) GETID(var)),
+    id()
 {
     switch (GETID(var)) {
     case TLType::PeerUser:
@@ -26,10 +26,10 @@ TLPeer::TLPeer(QVariantMap var) :
 }
 
 TLDialog::TLDialog(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
     peer(var["peer"].toMap()),
     pinned(var["flags"].toInt() & 4),
-    topMessage(var["top_message"].toInt()),
-    type((TLType::Types) GETID(var))
+    topMessage(var["top_message"].toInt())
 {
 
 }
@@ -42,9 +42,11 @@ TLChat::TLChat(QVariantMap var) :
 
 }
 
-TLMessage::TLMessage(QVariantMap var)
+TLMessage::TLMessage(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    id(var["id"].toInt())
 {
-    //TODO
+
 }
 
 TLInputPeer::TLInputPeer(QVariantMap var)
