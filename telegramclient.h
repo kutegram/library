@@ -88,10 +88,12 @@ public:
     void handleDialogsSlice(QByteArray data);
 
     void initConnection();
+
     bool isLoggedIn();
     bool isAuthorized();
     bool isOpened();
     bool isConnected();
+    bool apiReady();
 
     State getState();
 

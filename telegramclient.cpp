@@ -95,6 +95,11 @@ bool TelegramClient::isConnected()
     return isOpened() && isAuthorized() && state > AUTHORIZED;
 }
 
+bool TelegramClient::apiReady()
+{
+    return isConnected() && isLoggedIn() && state == LOGGED_IN;
+}
+
 void TelegramClient::start()
 {
     if (socket) return;
@@ -119,7 +124,7 @@ void TelegramClient::stop()
     socket->abort();
     socket->waitForDisconnected(2000);
     socket->deleteLater();
-    socket = 0; //TODO After deletion
+    socket = 0;
 
     changeState(STOPPED);
     sync();
