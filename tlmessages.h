@@ -17,18 +17,18 @@ struct TLDialog
     TLPeer peer;
     bool pinned;
     qint32 topMessage;
+    TLType::Types type;
 
     TLDialog(QVariantMap var);
 };
 
 struct TLChat
 {
-    TLChat(QVariantMap var);
-};
+    TLType::Types type;
+    qint32 id;
+    QString title;
 
-struct TLChannel
-{
-    TLChannel(QVariantMap var);
+    TLChat(QVariantMap var);
 };
 
 struct TLMessage
@@ -43,6 +43,13 @@ struct TLInputPeer
 
 struct TLUser
 {
+    TLType::Types type;
+    qint32 id;
+    bool self;
+    QString firstName;
+    QString lastName;
+    QString username;
+
     TLUser(QVariantMap var);
 };
 

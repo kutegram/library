@@ -9,39 +9,37 @@
 #endif
 
 TLPeer::TLPeer(QVariantMap var) :
-    id(), type()
+    id(),
+    type((TLType::Types) GETID(var))
 {
     switch (GETID(var)) {
     case TLType::PeerUser:
-        type = TLType::PeerUser;
         id = var["user_id"].toInt();
         break;
     case TLType::PeerChat:
-        type = TLType::PeerChat;
         id = var["chat_id"].toInt();
         break;
     case TLType::PeerChannel:
-        type = TLType::PeerChannel;
         id = var["channel_id"].toInt();
         break;
     }
 }
 
 TLDialog::TLDialog(QVariantMap var) :
-    peer(var["peer"].toMap()), pinned(), topMessage()
+    peer(var["peer"].toMap()),
+    pinned(var["flags"].toInt() & 4),
+    topMessage(var["top_message"].toInt()),
+    type((TLType::Types) GETID(var))
 {
-    pinned = (var["flags"].toInt() & 4);
-    topMessage = var["top_message"].toInt();
+
 }
 
-TLChat::TLChat(QVariantMap var)
+TLChat::TLChat(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    id(var["id"].toInt()),
+    title(var["title"].toString())
 {
-    //TODO
-}
 
-TLChannel::TLChannel(QVariantMap var)
-{
-    //TODO
 }
 
 TLMessage::TLMessage(QVariantMap var)
@@ -54,9 +52,15 @@ TLInputPeer::TLInputPeer(QVariantMap var)
     //TODO
 }
 
-TLUser::TLUser(QVariantMap var)
+TLUser::TLUser(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    id(var["id"].toInt()),
+    self(var["flags"].toInt() & 1024),
+    firstName(var["first_name"].toString()),
+    lastName(var["last_name"].toString()),
+    username(var["username"].toString())
 {
-    //TODO
+
 }
 
 void TelegramClient::getDialogs()
