@@ -34,11 +34,31 @@ TLDialog::TLDialog(QVariantMap var) :
 
 }
 
+TLFileLocation::TLFileLocation(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    volumeId(var["volume_id"].toLongLong()),
+    localId(var["local_id"].toInt())
+{
+
+}
+
+TLProfilePhoto::TLProfilePhoto(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    hasVideo(var["flags"].toInt() & 1),
+    dcId(var["dc_id"].toInt()),
+    photoId(var["photo_id"].toInt()),
+    photoSmall(var["photo_small"].toMap()),
+    photoBig(var["photo_big"].toMap())
+{
+
+}
+
 TLChat::TLChat(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
     title(var["title"].toString()),
-    accessHash(var["access_hash"].toLongLong())
+    accessHash(var["access_hash"].toLongLong()),
+    photo(var["photo"].toMap())
 {
 
 }
@@ -157,7 +177,8 @@ TLUser::TLUser(QVariantMap var) :
     firstName(var["first_name"].toString()),
     lastName(var["last_name"].toString()),
     username(var["username"].toString()),
-    accessHash(var["access_hash"].toLongLong())
+    accessHash(var["access_hash"].toLongLong()),
+    photo(var["photo"].toMap())
 {
 
 }

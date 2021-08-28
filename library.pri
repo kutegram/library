@@ -13,7 +13,8 @@ HEADERS += \
     $$PWD/mtschema.h \
     $$PWD/tlschema.h \
     $$PWD/crypto.h \
-    $$PWD/tlmessages.h
+    $$PWD/tlmessages.h \
+    $$PWD/tlfiles.h
 
 SOURCES += \
     $$PWD/telegramclient.cpp \
@@ -24,4 +25,5 @@ SOURCES += \
     $$PWD/crypto.cpp \
     $$PWD/telegramhandling.cpp \
     $$PWD/telegramapi.cpp \
-    $$PWD/tlmessages.cpp
+    $$PWD/tlmessages.cpp \
+    $$PWD/tlfiles.cpp

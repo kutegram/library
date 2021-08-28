@@ -22,12 +22,34 @@ struct TLDialog
     TLDialog(QVariantMap var = QVariantMap());
 };
 
+struct TLFileLocation
+{
+    TLType::Types type;
+    qint64 volumeId;
+    qint32 localId;
+
+    TLFileLocation(QVariantMap var = QVariantMap());
+};
+
+struct TLProfilePhoto
+{
+    TLType::Types type;
+    bool hasVideo;
+    qint32 dcId;
+    qint32 photoId;
+    TLFileLocation photoSmall;
+    TLFileLocation photoBig;
+
+    TLProfilePhoto(QVariantMap var = QVariantMap());
+};
+
 struct TLChat
 {
     TLType::Types type;
     qint32 id;
     QString title;
     qint64 accessHash;
+    TLProfilePhoto photo;
 
     TLChat(QVariantMap var = QVariantMap());
 };
@@ -64,6 +86,7 @@ struct TLUser
     QString lastName;
     QString username;
     qint64 accessHash;
+    TLProfilePhoto photo;
 
     TLUser(QVariantMap var = QVariantMap());
 };
