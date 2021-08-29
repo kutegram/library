@@ -120,23 +120,39 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
         session.authKey = AuthKey();
         session.userId = 0;
 
+        //TODO reauth
         sync();
     }
+
+    //TODO handle errors
+    //PHONE_CODE_INVALID
+    //SESSION_PASSWORD_NEEDED
+    //FLOOD_WAIT_
+    //PHONE_MIGRATE_
+    //FILE_MIGRATE_
+    //USER_MIGRATE_
+    //NETWORK_MIGRATE_
 }
 
 void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
 {
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLConfig(packet, var);
+    dcConfig = var.toMap();
+
     changeState(INITED);
 
     if (isLoggedIn()) {
         changeState(LOGGED_IN);
     }
 
-    sync();
-
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a config. Connection inited.";
 #endif
+
+    sync();
 }
 
 void TelegramClient::handleMsgCopy(QByteArray data, qint64 mtm)

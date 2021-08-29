@@ -11,6 +11,7 @@
 #include <QtCore>
 #include "tlschema.h"
 #include <QApplication>
+#include <QNetworkConfigurationManager>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
@@ -46,9 +47,43 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
 QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 
 TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
-    QObject(parent), session(), socket(0), newNonce(), nonce(), messages(), confirm(), state(STOPPED), retryId(), sessionFile(sessionId + ".session", QSettings::IniFormat, this), readMutex(QMutex::Recursive), msgMutex(QMutex::Recursive)
+    QObject(parent),
+    session(),
+    socket(this),
+    newNonce(),
+    nonce(),
+    messages(),
+    confirm(),
+    state(STOPPED),
+    retryId(),
+    sessionFile(sessionId + ".session", QSettings::IniFormat, this),
+    readMutex(QMutex::Recursive),
+    msgMutex(QMutex::Recursive),
+    networkSession(0),
+    dcConfig()
 {
     session.deserialize(sessionFile.value("session").toMap());
+
+    socket.setSocketOption(QTcpSocket::LowDelayOption, 1);
+    socket.setSocketOption(QTcpSocket::KeepAliveOption, 1);
+
+    connect(&socket, SIGNAL(connected()), this, SLOT(socket_connected()));
+    connect(&socket, SIGNAL(disconnected()), this, SLOT(socket_disconnected()));
+    connect(&socket, SIGNAL(readyRead()), this, SLOT(socket_readyRead()));
+    connect(&socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
+    connect(&socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
+
+    QNetworkConfigurationManager manager;
+    if (manager.capabilities() & QNetworkConfigurationManager::NetworkSessionRequired) {
+        QNetworkConfiguration config = manager.configurationFromIdentifier(sessionFile.value("network").toString());
+        if ((config.state() & QNetworkConfiguration::Discovered) != QNetworkConfiguration::Discovered) {
+            config = manager.defaultConfiguration();
+        }
+
+        networkSession = new QNetworkSession(config, this);
+        connect(networkSession, SIGNAL(opened()), this, SLOT(networkSession_opened()));
+        networkSession->open(); //TODO network session error handling?
+    }
 }
 
 void TelegramClient::changeState(State s)
@@ -83,7 +118,7 @@ bool TelegramClient::isAuthorized()
 
 bool TelegramClient::isOpened()
 {
-    return socket && socket->isOpen();
+    return socket.isOpen();
 }
 
 State TelegramClient::getState()
@@ -103,44 +138,33 @@ bool TelegramClient::apiReady()
 
 void TelegramClient::start()
 {
-    if (socket) return;
-    socket = new QTcpSocket(this);
-    socket->setSocketOption(QTcpSocket::LowDelayOption, 1);
-    socket->setSocketOption(QTcpSocket::KeepAliveOption, 1);
-
-    connect(socket, SIGNAL(connected()), this, SLOT(socket_connected()));
-    connect(socket, SIGNAL(disconnected()), this, SLOT(socket_disconnected()));
-    connect(socket, SIGNAL(readyRead()), this, SLOT(socket_readyRead()));
-    connect(socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
-    connect(socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
+    //if (isOpened()) return;
+    stop();
 
     changeState(CONNECTING);
-    socket->connectToHost(DC_IP, DC_PORT);
+    socket.connectToHost(DC_IP, DC_PORT);
 }
 
 void TelegramClient::stop()
 {
-    if (!socket) return;
+    if (!isOpened()) return;
 
-    socket->abort();
-    socket->waitForDisconnected(2000);
-    socket->deleteLater();
-    socket = 0;
-
+    socket.abort();
+    socket.waitForDisconnected();
     changeState(STOPPED);
     sync();
 }
 
 void TelegramClient::socket_connected()
 {
-    if (!socket) return;
+    if (!isOpened()) return;
 
 #ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << "Socket was connected to" << socket->peerName() << ":" << socket->peerPort();
+    qDebug() << "Socket was connected to" << socket.peerName() << ":" << socket.peerPort();
 #endif
 
     //Init MTProto transport
-    QDataStream stream(socket);
+    QDataStream stream(&socket);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << 0xeeeeeeee;
 
@@ -179,7 +203,7 @@ void TelegramClient::socket_readyRead()
 
     readMutex.lock();
 
-    while (socket->bytesAvailable()) {
+    while (socket.bytesAvailable()) {
 #ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "Bytes are avaliable, trying to read";
 #endif
@@ -284,26 +308,26 @@ void TelegramClient::sendPlainPacket(QByteArray raw)
 
 void TelegramClient::sendMessage(QByteArray raw)
 {
-    if (!socket) return;
+    if (!isOpened()) return;
 
-    QDataStream stream(socket);
+    QDataStream stream(&socket);
     stream.setByteOrder(QDataStream::LittleEndian);
     stream << raw.length();
 
-    socket->write(raw);
+    socket.write(raw);
 }
 
 QByteArray TelegramClient::readMessage()
 {
-    if (!socket || !socket->bytesAvailable()) return QByteArray();
+    if (!isOpened() || !socket.bytesAvailable()) return QByteArray();
 
-    QDataStream stream(socket);
+    QDataStream stream(&socket);
     stream.setByteOrder(QDataStream::LittleEndian);
     qint32 length;
     stream >> length;
 
 #ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket->bytesAvailable() << "/" << length << ")";
+    qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket.bytesAvailable() << "/" << length << ")";
 #endif
 
     QByteArray i;
@@ -312,9 +336,9 @@ QByteArray TelegramClient::readMessage()
 
     qint32 total = 0;
     while (length > 0) {
-        qint32 readed = socket->read(i.data() + total, length);
+        qint32 readed = socket.read(i.data() + total, length);
         if (readed < 0) return QByteArray();
-        if (!readed) socket->waitForReadyRead();
+        if (!readed) socket.waitForReadyRead();
         total += readed;
         length -= readed;
     }
@@ -718,7 +742,6 @@ void TelegramClient::initConnection()
 void TelegramClient::sync()
 {
     sessionFile.setValue("session", session.serialize());
-    //sessionFile.sync(); //TODO: do we need to call it?
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Session synced.";
 #endif
@@ -730,6 +753,7 @@ void TelegramClient::handleDhGenFail(QByteArray data, qint64 mtm)
     qDebug() << "DH generation failed.";
 #endif
 
+    //TODO reauth
     emit gotDHError(true);
     stop();
 }
@@ -740,6 +764,17 @@ void TelegramClient::handleDhGenRetry(QByteArray data, qint64 mtm)
     qDebug() << "DH generation requires a retry.";
 #endif
 
+    //TODO reauth
     emit gotDHError(false);
     stop();
+}
+
+void TelegramClient::networkSession_opened()
+{
+    QNetworkConfiguration config = networkSession->configuration();
+    QString id;
+    if (config.type() == QNetworkConfiguration::UserChoice) id = networkSession->sessionProperty(QLatin1String("UserChoiceConfiguration")).toString();
+    else id = config.identifier();
+
+    sessionFile.setValue("network", id);
 }

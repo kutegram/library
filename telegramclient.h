@@ -11,6 +11,7 @@
 #include <QSettings>
 #include "tlmessages.h"
 #include <QMutex>
+#include <QNetworkSession>
 
 enum State
 {
@@ -35,8 +36,8 @@ class TelegramClient : public QObject
     Q_OBJECT
 private:
     TelegramSession session;
-    //TODO network session saving (see fortune client example)
-    QTcpSocket *socket;
+    QTcpSocket socket;
+    QNetworkSession* networkSession;
     QSettings sessionFile;
 
     QByteArray nonce;
@@ -44,8 +45,10 @@ private:
     QByteArray serverNonce;
     qint64 retryId;
 
-    QMap<qint64, QByteArray> messages;
+    QMap<qint64, QByteArray> messages; //TODO remove message after getting response
     QList<qint64> confirm;
+
+    TelegramObject dcConfig;
 
     State state;
 
@@ -133,6 +136,7 @@ private slots:
     void socket_readyRead();
     void socket_bytesWritten(qint64 count);
     void socket_error(QAbstractSocket::SocketError error);
+    void networkSession_opened();
 };
 
 template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm)
