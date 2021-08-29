@@ -28,7 +28,7 @@ TLPeer::TLPeer(QVariantMap var) :
 TLDialog::TLDialog(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     peer(var["peer"].toMap()),
-    pinned(var["flags"].toInt() & 4),
+    pinned(var["flags"].toUInt() & 4),
     topMessage(var["top_message"].toInt())
 {
 
@@ -42,9 +42,46 @@ TLFileLocation::TLFileLocation(QVariantMap var) :
 
 }
 
+TLInputFileLocation::TLInputFileLocation(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    big(var["flags"].toUInt() & 1),
+    peer(var["peer"].toMap()),
+    volumeId(var["volume_id"].toLongLong()),
+    localId(var["local_id"].toInt())
+{
+
+}
+
+TLInputFileLocation::TLInputFileLocation(TLFileLocation loc, TLInputPeer p, bool b) :
+    type(TLType::InputPeerPhotoFileLocation),
+    big(b),
+    peer(p),
+    volumeId(loc.volumeId),
+    localId(loc.localId)
+{
+
+}
+
+QVariantMap TLInputFileLocation::serialize()
+{
+    //TODO other types
+    TGOBJECT(obj, type);
+
+    switch (type) {
+    case TLType::InputPeerPhotoFileLocation:
+        if (big) obj["big"] = true; //because of flags.
+        obj["peer"] = peer.serialize();
+        obj["volume_id"] = volumeId;
+        obj["local_id"] = localId;
+        return obj;
+    default:
+        return obj;
+    }
+}
+
 TLProfilePhoto::TLProfilePhoto(QVariantMap var) :
     type((TLType::Types) GETID(var)),
-    hasVideo(var["flags"].toInt() & 1),
+    hasVideo(var["flags"].toUInt() & 1),
     dcId(var["dc_id"].toInt()),
     photoId(var["photo_id"].toInt()),
     photoSmall(var["photo_small"].toMap()),
@@ -173,7 +210,7 @@ QVariantMap TLInputPeer::serialize()
 TLUser::TLUser(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
-    self(var["flags"].toInt() & 1024),
+    self(var["flags"].toUInt() & 1024),
     firstName(var["first_name"].toString()),
     lastName(var["last_name"].toString()),
     username(var["username"].toString()),

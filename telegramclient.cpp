@@ -38,6 +38,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::AuthLoginToken] = &TelegramClient::handleLoginToken;
     map[TLType::MessagesDialogs] = &TelegramClient::handleDialogs;
     map[TLType::MessagesDialogsSlice] = &TelegramClient::handleDialogsSlice;
+    map[TLType::UploadFile] = &TelegramClient::handleFile;
 
     return map;
 }

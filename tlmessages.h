@@ -3,6 +3,7 @@
 
 #include <QVariant>
 #include "tlschema.h"
+#include "tlfiles.h"
 
 struct TLPeer
 {
@@ -22,6 +23,19 @@ struct TLDialog
     TLDialog(QVariantMap var = QVariantMap());
 };
 
+struct TLInputPeer
+{
+    TLType::Types type;
+    qint32 id;
+    qint32 messageId;
+    qint64 accessHash;
+    QVariantMap peer;
+
+    TLInputPeer(TLPeer p, qint64 aH = 0);
+    TLInputPeer(QVariantMap var = QVariantMap());
+    QVariantMap serialize();
+};
+
 struct TLFileLocation
 {
     TLType::Types type;
@@ -29,6 +43,19 @@ struct TLFileLocation
     qint32 localId;
 
     TLFileLocation(QVariantMap var = QVariantMap());
+};
+
+struct TLInputFileLocation
+{
+    TLType::Types type;
+    bool big;
+    TLInputPeer peer;
+    qint64 volumeId;
+    qint32 localId;
+
+    TLInputFileLocation(QVariantMap var = QVariantMap());
+    TLInputFileLocation(TLFileLocation loc, TLInputPeer p, bool b = true);
+    QVariantMap serialize();
 };
 
 struct TLProfilePhoto
@@ -62,19 +89,6 @@ struct TLMessage
     TLPeer peer;
 
     TLMessage(QVariantMap var = QVariantMap());
-};
-
-struct TLInputPeer
-{
-    TLType::Types type;
-    qint32 id;
-    qint32 messageId;
-    qint64 accessHash;
-    QVariantMap peer;
-
-    TLInputPeer(TLPeer p, qint64 aH = 0);
-    TLInputPeer(QVariantMap var = QVariantMap());
-    QVariantMap serialize();
 };
 
 struct TLUser
