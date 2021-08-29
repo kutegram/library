@@ -21,5 +21,9 @@ void TelegramClient::handleFile(QByteArray data, qint64 mtm)
     readTLUploadFile(packet, var);
     TelegramObject obj = var.toMap();
 
-    emit gotFile(mtm, GETID(obj) ? (TLType::Types) GETID(obj) : TLType::StorageFileUnknown, obj["mtime"].toInt(), obj["bytes"].toByteArray());
+    TLType::Types type = TLType::StorageFileUnknown;
+    TelegramObject typeObj = obj["type"].toMap();
+    if (GETID(typeObj)) type = (TLType::Types) GETID(typeObj);
+
+    emit gotFile(mtm, type, obj["mtime"].toInt(), obj["bytes"].toByteArray());
 }
