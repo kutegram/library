@@ -5,37 +5,6 @@
 #include "tlschema.h"
 #include "tlfiles.h"
 
-struct TLPeer
-{
-    TLType::Types type;
-    qint32 id;
-
-    TLPeer(QVariantMap var = QVariantMap());
-};
-
-struct TLDialog
-{
-    TLType::Types type;
-    TLPeer peer;
-    bool pinned;
-    qint32 topMessage;
-
-    TLDialog(QVariantMap var = QVariantMap());
-};
-
-struct TLInputPeer
-{
-    TLType::Types type;
-    qint32 id;
-    qint32 messageId;
-    qint64 accessHash;
-    QVariantMap peer;
-
-    TLInputPeer(TLPeer p, qint64 aH = 0);
-    TLInputPeer(QVariantMap var = QVariantMap());
-    QVariantMap serialize();
-};
-
 struct TLFileLocation
 {
     TLType::Types type;
@@ -43,19 +12,6 @@ struct TLFileLocation
     qint32 localId;
 
     TLFileLocation(QVariantMap var = QVariantMap());
-};
-
-struct TLInputFileLocation
-{
-    TLType::Types type;
-    bool big;
-    TLInputPeer peer;
-    qint64 volumeId;
-    qint32 localId;
-
-    TLInputFileLocation(QVariantMap var = QVariantMap());
-    TLInputFileLocation(TLFileLocation loc, TLInputPeer p, bool b = true);
-    QVariantMap serialize();
 };
 
 struct TLProfilePhoto
@@ -78,17 +34,8 @@ struct TLChat
     qint64 accessHash;
     TLProfilePhoto photo;
 
+    bool isChannel();
     TLChat(QVariantMap var = QVariantMap());
-};
-
-struct TLMessage
-{
-    TLType::Types type;
-    qint32 id;
-    qint32 date;
-    TLPeer peer;
-
-    TLMessage(QVariantMap var = QVariantMap());
 };
 
 struct TLUser
@@ -103,6 +50,64 @@ struct TLUser
     TLProfilePhoto photo;
 
     TLUser(QVariantMap var = QVariantMap());
+};
+
+struct TLPeer
+{
+    TLType::Types type;
+    qint32 id;
+
+    TLPeer(TLChat c);
+    TLPeer(TLUser u);
+    TLPeer(QVariantMap var = QVariantMap());
+};
+
+struct TLDialog
+{
+    TLType::Types type;
+    TLPeer peer;
+    bool pinned;
+    qint32 topMessage;
+
+    TLDialog(QVariantMap var = QVariantMap());
+};
+
+struct TLInputPeer
+{
+    TLType::Types type;
+    qint32 id;
+    qint32 messageId;
+    qint64 accessHash;
+    QVariantMap peer;
+
+    TLInputPeer(TLChat c);
+    TLInputPeer(TLUser u);
+    TLInputPeer(TLPeer p, qint64 aH = 0);
+    TLInputPeer(QVariantMap var = QVariantMap());
+    QVariantMap serialize();
+};
+
+struct TLInputFileLocation
+{
+    TLType::Types type;
+    bool big;
+    TLInputPeer peer;
+    qint64 volumeId;
+    qint32 localId;
+
+    TLInputFileLocation(QVariantMap var = QVariantMap());
+    TLInputFileLocation(TLFileLocation loc, TLInputPeer p, bool b = true);
+    QVariantMap serialize();
+};
+
+struct TLMessage
+{
+    TLType::Types type;
+    qint32 id;
+    qint32 date;
+    TLPeer peer;
+
+    TLMessage(QVariantMap var = QVariantMap());
 };
 
 #endif // TLMESSAGES_H

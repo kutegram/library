@@ -8,6 +8,7 @@
 namespace MTType {
 enum Types
 {
+    Unknown = 0,
     Vector = 481674261,
     ResPQ = 85337187,
     PQInnerDataDc = -1443537003,

@@ -25,6 +25,20 @@ TLPeer::TLPeer(QVariantMap var) :
     }
 }
 
+TLPeer::TLPeer(TLChat c) :
+    type(c.isChannel() ? TLType::PeerChannel : TLType::PeerChat),
+    id(c.id)
+{
+
+}
+
+TLPeer::TLPeer(TLUser u) :
+    type(TLType::PeerUser),
+    id(u.id)
+{
+
+}
+
 TLDialog::TLDialog(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     peer(var["peer"].toMap()),
@@ -100,6 +114,11 @@ TLChat::TLChat(QVariantMap var) :
 
 }
 
+bool TLChat::isChannel()
+{
+    return type == TLType::Channel || type == TLType::ChannelForbidden;
+}
+
 TLMessage::TLMessage(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
@@ -135,6 +154,26 @@ TLInputPeer::TLInputPeer(TLPeer p, qint64 aH) :
         type = TLType::InputPeerEmpty;
         break;
     }
+}
+
+TLInputPeer::TLInputPeer(TLChat c) :
+    type(c.isChannel() ? TLType::InputPeerChannel : TLType::InputPeerChat),
+    id(c.id),
+    messageId(),
+    accessHash(c.accessHash),
+    peer()
+{
+
+}
+
+TLInputPeer::TLInputPeer(TLUser u) :
+    type(TLType::InputPeerUser),
+    id(u.id),
+    messageId(),
+    accessHash(u.accessHash),
+    peer()
+{
+
 }
 
 TLInputPeer::TLInputPeer(QVariantMap var) :

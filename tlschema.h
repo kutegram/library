@@ -10,6 +10,7 @@
 namespace TLType {
 enum Types
 {
+    Unknown = 0,
     BoolFalse = -1132882121,
     BoolTrue = -1720552011,
     True = 1072550713,
