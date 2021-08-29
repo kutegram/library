@@ -103,7 +103,7 @@ public:
     void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
     void getUpdatesState(); //TODO updates.state handle
     void getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
-    qint64 getFile(TLInputFileLocation location, qint32 limit = 0, qint32 offset = 0);
+    qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
 
 signals:
     void handleResponse(QByteArray data, qint32 conId, qint64 mtm);
