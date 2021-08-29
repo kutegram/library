@@ -65,9 +65,8 @@ private:
     QMutex readMutex;
     QMutex msgMutex;
 
-    //TODO gzip send MTProto messages
-    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false);
-    qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
+    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
+    qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
     void sendPlainPacket(QByteArray raw);
     //TODO use timer and floodrate
     void sendMessage(QByteArray raw);
@@ -79,6 +78,7 @@ private:
     void changeState(State state);
 
     void sendMsgsAck();
+    QByteArray gzipPacket(QByteArray data);
 public:
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
@@ -153,13 +153,13 @@ private slots:
     void networkSession_opened();
 };
 
-template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm)
+template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm, bool binary)
 {
     if (!W) return 0;
     TelegramPacket packet;
     (*W)(packet, obj, 0);
 
-    return sendMTPacket(packet.toByteArray(), ignoreConfirm);
+    return sendMTPacket(packet.toByteArray(), ignoreConfirm, binary);
 }
 
 #endif // TELEGRAMCLIENT_H

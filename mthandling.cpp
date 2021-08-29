@@ -40,7 +40,7 @@ void TelegramClient::handleGzipPacked(QByteArray data, qint64 mtm)
     data = var.toByteArray();
 
     Gunzip unzipper;
-    unzipper.Put((const byte*) data.constData(), data.size(), true);
+    unzipper.Put((const byte*) data.constData(), data.size());
     unzipper.MessageEnd();
 
     data.reserve(unzipper.MaxRetrievable());

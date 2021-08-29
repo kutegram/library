@@ -12,6 +12,9 @@
 #include "tlschema.h"
 #include <QApplication>
 #include <QNetworkConfigurationManager>
+#include "cryptopp/gzip.h"
+
+using namespace CryptoPP;
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
@@ -741,7 +744,26 @@ void TelegramClient::sendMsgsAck()
     }
 }
 
-qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
+QByteArray TelegramClient::gzipPacket(QByteArray data)
+{
+    TGOBJECT(zipped, MTType::GzipPacked);
+
+    Gzip zip;
+    zip.Put((const byte*) data.constData(), data.size());
+    zip.MessageEnd();
+
+    data.reserve(zip.MaxRetrievable());
+    data.resize(zip.MaxRetrievable());
+    zip.Get((byte*) data.data(), data.size());
+
+    zipped["packed_data"] = data;
+
+    TelegramPacket packet;
+    writeMTObject(packet, zipped);
+    return packet.toByteArray();
+}
+
+qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm, bool binary)
 {
     if (state < AUTHORIZED) return 0;
     if (!ignoreConfirm) sendMsgsAck();
@@ -751,6 +773,8 @@ qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Sending MTProto object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
 #endif
+
+    if (!binary && raw.size() > 255) raw = gzipPacket(raw);
 
     qint64 messageId = getNewMessageId();
     messages.insert(messageId, raw);
