@@ -2,7 +2,7 @@
 
 #include "telegramclient.h"
 
-void TelegramClient::getFile(TLInputFileLocation location, qint32 limit, qint32 offset)
+qint64 TelegramClient::getFile(TLInputFileLocation location, qint32 limit, qint32 offset)
 {
     TGOBJECT(getFile, TLType::UploadGetFileMethod);
 
@@ -10,10 +10,10 @@ void TelegramClient::getFile(TLInputFileLocation location, qint32 limit, qint32 
     getFile["offset"] = offset;
     getFile["limit"] = limit;
 
-    sendMTObject<&writeTLMethodUploadGetFile>(getFile);
+    return sendMTObject<&writeTLMethodUploadGetFile>(getFile);
 }
 
-void TelegramClient::handleFile(QByteArray data)
+void TelegramClient::handleFile(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -21,5 +21,5 @@ void TelegramClient::handleFile(QByteArray data)
     readTLUploadFile(packet, var);
     TelegramObject obj = var.toMap();
 
-    emit gotFile(GETID(obj) ? (TLType::Types) GETID(obj) : TLType::StorageFileUnknown, obj["mtime"].toInt(), obj["bytes"].toByteArray());
+    emit gotFile(mtm, GETID(obj) ? (TLType::Types) GETID(obj) : TLType::StorageFileUnknown, obj["mtime"].toInt(), obj["bytes"].toByteArray());
 }

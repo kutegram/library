@@ -53,12 +53,12 @@ private:
     QMutex msgMutex;
 
     //TODO gzip send MTProto messages
-    template <WRITE_METHOD W> void sendMTObject(QVariant obj, bool ignoreConfirm = false);
-    void sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
+    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false);
+    qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
     void sendMessage(QByteArray raw);
     QByteArray readMessage();
-    void handleMessage(QByteArray messageData);
+    void handleMessage(QByteArray messageData, qint64 mtm);
 
     qint64 getNewMessageId();
     qint32 generateSequence(bool confirmed);
@@ -67,26 +67,26 @@ private:
 public:
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
-    void handleResPQ(QByteArray data);
-    void handleServerDHParamsOk(QByteArray data);
-    void handleDhGenOk(QByteArray data);
-    void handleBadServerSalt(QByteArray data);
-    void handleRpcResult(QByteArray data);
-    void handleGzipPacked(QByteArray data);
-    void handleMsgContainer(QByteArray data);
-    void handleBadMsgNotification(QByteArray data);
-    void handleNewSessionCreated(QByteArray data);
-    void handleRpcError(QByteArray data);
-    void handleConfig(QByteArray data);
-    void handleMsgCopy(QByteArray data);
-    void handleDhGenRetry(QByteArray data);
-    void handleDhGenFail(QByteArray data);
-    void handleLoginToken(QByteArray data);
-    void handleSentCode(QByteArray data);
-    void handleAuthorization(QByteArray data);
-    void handleDialogs(QByteArray data);
-    void handleDialogsSlice(QByteArray data);
-    void handleFile(QByteArray data);
+    void handleResPQ(QByteArray data, qint64 mtm);
+    void handleServerDHParamsOk(QByteArray data, qint64 mtm);
+    void handleDhGenOk(QByteArray data, qint64 mtm);
+    void handleBadServerSalt(QByteArray data, qint64 mtm);
+    void handleRpcResult(QByteArray data, qint64 mtm);
+    void handleGzipPacked(QByteArray data, qint64 mtm);
+    void handleMsgContainer(QByteArray data, qint64 mtm);
+    void handleBadMsgNotification(QByteArray data, qint64 mtm);
+    void handleNewSessionCreated(QByteArray data, qint64 mtm);
+    void handleRpcError(QByteArray data, qint64 mtm);
+    void handleConfig(QByteArray data, qint64 mtm);
+    void handleMsgCopy(QByteArray data, qint64 mtm);
+    void handleDhGenRetry(QByteArray data, qint64 mtm);
+    void handleDhGenFail(QByteArray data, qint64 mtm);
+    void handleLoginToken(QByteArray data, qint64 mtm);
+    void handleSentCode(QByteArray data, qint64 mtm);
+    void handleAuthorization(QByteArray data, qint64 mtm);
+    void handleDialogs(QByteArray data, qint64 mtm);
+    void handleDialogsSlice(QByteArray data, qint64 mtm);
+    void handleFile(QByteArray data, qint64 mtm);
 
     void initConnection();
 
@@ -103,10 +103,10 @@ public:
     void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
     void getUpdatesState(); //TODO updates.state handle
     void getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
-    void getFile(TLInputFileLocation location, qint32 limit = 0, qint32 offset = 0);
+    qint64 getFile(TLInputFileLocation location, qint32 limit = 0, qint32 offset = 0);
 
 signals:
-    void handleResponse(QByteArray data, qint32 conId);
+    void handleResponse(QByteArray data, qint32 conId, qint64 mtm);
     void stateChanged(State state);
 
     void gotSocketError(QAbstractSocket::SocketError error);
@@ -120,7 +120,7 @@ signals:
     void gotAuthorization();
 
     void gotDialogs(qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
-    void gotFile(TLType::Types type, qint32 mtime, QByteArray bytes);
+    void gotFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes);
 
 public slots:
     void start();
@@ -135,13 +135,13 @@ private slots:
     void socket_error(QAbstractSocket::SocketError error);
 };
 
-template <WRITE_METHOD W> void TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm)
+template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm)
 {
-    if (!W) return;
+    if (!W) return 0;
     TelegramPacket packet;
     (*W)(packet, obj, 0);
 
-    sendMTPacket(packet.toByteArray(), ignoreConfirm);
+    return sendMTPacket(packet.toByteArray(), ignoreConfirm);
 }
 
 #endif // TELEGRAMCLIENT_H

@@ -234,7 +234,7 @@ void TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TLInputPeer 
     sendMTObject< &writeTLMethodMessagesGetDialogs >(getDialogs);
 }
 
-void TelegramClient::handleDialogs(QByteArray data)
+void TelegramClient::handleDialogs(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -269,7 +269,7 @@ void TelegramClient::handleDialogs(QByteArray data)
     emit gotDialogs(0, dialogs, messages, chats, users);
 }
 
-void TelegramClient::handleDialogsSlice(QByteArray data)
+void TelegramClient::handleDialogsSlice(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;

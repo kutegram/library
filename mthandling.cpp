@@ -5,7 +5,7 @@
 
 using namespace CryptoPP;
 
-void TelegramClient::handleBadServerSalt(QByteArray data)
+void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -23,13 +23,13 @@ void TelegramClient::handleBadServerSalt(QByteArray data)
     emit gotMessageError(badServerSalt["error_code"].toInt());
 }
 
-void TelegramClient::handleRpcResult(QByteArray data)
+void TelegramClient::handleRpcResult(QByteArray data, qint64 mtm)
 {
     data.remove(0, 12);
-    handleMessage(data);
+    handleMessage(data, mtm);
 }
 
-void TelegramClient::handleGzipPacked(QByteArray data)
+void TelegramClient::handleGzipPacked(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     packet.skipRawBytes(4); //conId
@@ -46,10 +46,10 @@ void TelegramClient::handleGzipPacked(QByteArray data)
     data.resize(unzipper.MaxRetrievable());
     unzipper.Get((byte*) data.data(), data.size());
 
-    handleMessage(data);
+    handleMessage(data, mtm);
 }
 
-void TelegramClient::handleMsgContainer(QByteArray data)
+void TelegramClient::handleMsgContainer(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -63,11 +63,11 @@ void TelegramClient::handleMsgContainer(QByteArray data)
         readInt32(packet, var); //seqNo
         readInt32(packet, var); //size
         packet.readRawBytes(array, var.toInt());
-        handleMessage(array);
+        handleMessage(array, mtm);
     }
 }
 
-void TelegramClient::handleBadMsgNotification(QByteArray data)
+void TelegramClient::handleBadMsgNotification(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -82,7 +82,7 @@ void TelegramClient::handleBadMsgNotification(QByteArray data)
     emit gotMessageError(badMsgNotify["error_code"].toInt());
 }
 
-void TelegramClient::handleNewSessionCreated(QByteArray data)
+void TelegramClient::handleNewSessionCreated(QByteArray data, qint64 mtm)
 {
     //changeState(AUTHORIZED);
 
@@ -99,7 +99,7 @@ void TelegramClient::handleNewSessionCreated(QByteArray data)
     sync();
 }
 
-void TelegramClient::handleRpcError(QByteArray data)
+void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -124,7 +124,7 @@ void TelegramClient::handleRpcError(QByteArray data)
     }
 }
 
-void TelegramClient::handleConfig(QByteArray data)
+void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
 {
     changeState(INITED);
 
@@ -139,7 +139,7 @@ void TelegramClient::handleConfig(QByteArray data)
 #endif
 }
 
-void TelegramClient::handleMsgCopy(QByteArray data)
+void TelegramClient::handleMsgCopy(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -150,5 +150,5 @@ void TelegramClient::handleMsgCopy(QByteArray data)
     readInt32(packet, var); //size
     QByteArray array;
     packet.readRawBytes(array, var.toInt());
-    handleMessage(array);
+    handleMessage(array, mtm);
 }

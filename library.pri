@@ -23,7 +23,7 @@ SOURCES += \
     $$PWD/mtschema.cpp \
     $$PWD/tlschema.cpp \
     $$PWD/crypto.cpp \
-    $$PWD/telegramhandling.cpp \
+    $$PWD/mthandling.cpp \
     $$PWD/telegramapi.cpp \
     $$PWD/tlmessages.cpp \
     $$PWD/tlfiles.cpp

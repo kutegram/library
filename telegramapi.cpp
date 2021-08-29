@@ -11,7 +11,7 @@ void TelegramClient::exportLoginToken()
     sendMTObject<&writeTLMethodAuthExportLoginToken>(exportToken);
 }
 
-void TelegramClient::handleLoginToken(QByteArray data)
+void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -35,7 +35,7 @@ void TelegramClient::sendCode(QString phone_number)
     sendMTObject<&writeTLMethodAuthSendCode>(sendCode);
 }
 
-void TelegramClient::handleSentCode(QByteArray data)
+void TelegramClient::handleSentCode(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;
@@ -56,7 +56,7 @@ void TelegramClient::signIn(QString phone_number, QString phone_code_hash, QStri
     sendMTObject<&writeTLMethodAuthSignIn>(signIn);
 }
 
-void TelegramClient::handleAuthorization(QByteArray data)
+void TelegramClient::handleAuthorization(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
     QVariant var;

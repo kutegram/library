@@ -12,7 +12,7 @@
 #include "tlschema.h"
 #include <QApplication>
 
-typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray);
+typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
 QMap<qint32, HANDLE_METHOD> getHandleMap()
 {
@@ -207,6 +207,7 @@ void TelegramClient::socket_readyRead()
         //Reading message id
         readUInt64(message, id);
         QByteArray plainData;
+        qint64 mtMsgId = 0;
 
         if (!id.toULongLong()) {
 #ifndef QT_NO_DEBUG_OUTPUT
@@ -236,13 +237,14 @@ void TelegramClient::socket_readyRead()
             readUInt64(messagePlain, id); //remoteSalt
             readUInt64(messagePlain, id); //remoteId
             readInt64(messagePlain, id); //remoteMessageId
-            confirm.append(id.toLongLong());
+            mtMsgId = id.toLongLong();
+            confirm.append(mtMsgId);
             readInt32(messagePlain, id); //remoteSequence
             readInt32(messagePlain, id); //messageLength
             messagePlain.readRawBytes(plainData, id.toInt());
         }
 
-        handleMessage(plainData);
+        handleMessage(plainData, mtMsgId);
     }
 
     readMutex.unlock();
@@ -320,7 +322,7 @@ QByteArray TelegramClient::readMessage()
     return i;
 }
 
-void TelegramClient::handleMessage(QByteArray messageData)
+void TelegramClient::handleMessage(QByteArray messageData, qint64 mtm)
 {
     if (messageData.length() < 4) return;
     qint32 conId = qFromLittleEndian<qint32>((uchar*) messageData.mid(0, 4).data());
@@ -334,13 +336,13 @@ void TelegramClient::handleMessage(QByteArray messageData)
 #ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "Got a known TL object ( id" << conId << ")";
 #endif
-        (this->*method)(messageData);
+        (this->*method)(messageData, mtm);
     }
 
-    emit handleResponse(messageData, conId);
+    emit handleResponse(messageData, conId, mtm);
 }
 
-void TelegramClient::handleResPQ(QByteArray data)
+void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
 {
     changeState(DH_STEP_2);
 
@@ -459,7 +461,7 @@ void TelegramClient::handleResPQ(QByteArray data)
     sendPlainPacket(reqDHParamsPacket.toByteArray());
 }
 
-void TelegramClient::handleServerDHParamsOk(QByteArray data)
+void TelegramClient::handleServerDHParamsOk(QByteArray data, qint64 mtm)
 {
     changeState(DH_STEP_5);
 
@@ -543,7 +545,7 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data)
     sendPlainPacket(setCDHPPacket.toByteArray());
 }
 
-void TelegramClient::handleDhGenOk(QByteArray data)
+void TelegramClient::handleDhGenOk(QByteArray data, qint64 mtm)
 {
     changeState(DH_STEP_9);
 
@@ -633,9 +635,9 @@ qint32 TelegramClient::generateSequence(bool confirmed)
     return result;
 }
 
-void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
+qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 {
-    if (state < AUTHORIZED) return;
+    if (state < AUTHORIZED) return 0;
     //TODO: add timer send timeout
     while (!ignoreConfirm && !confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);
@@ -651,7 +653,7 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
         sendMTObject<&writeMTMsgsAck>(msgsAck, true);
     }
 
-    if (raw.isEmpty()) return;
+    if (raw.isEmpty()) return 0;
 
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Sending MTProto object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
@@ -682,6 +684,8 @@ void TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
 
     sendMessage(cipherPacket.toByteArray());
     sync();
+
+    return messageId;
 }
 
 void TelegramClient::initConnection()
@@ -720,7 +724,7 @@ void TelegramClient::sync()
 #endif
 }
 
-void TelegramClient::handleDhGenFail(QByteArray data)
+void TelegramClient::handleDhGenFail(QByteArray data, qint64 mtm)
 {
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "DH generation failed.";
@@ -730,7 +734,7 @@ void TelegramClient::handleDhGenFail(QByteArray data)
     stop();
 }
 
-void TelegramClient::handleDhGenRetry(QByteArray data)
+void TelegramClient::handleDhGenRetry(QByteArray data, qint64 mtm)
 {
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "DH generation requires a retry.";
