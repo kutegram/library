@@ -40,6 +40,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::MessagesDialogs] = &TelegramClient::handleDialogs;
     map[TLType::MessagesDialogsSlice] = &TelegramClient::handleDialogsSlice;
     map[TLType::UploadFile] = &TelegramClient::handleFile;
+    map[TLType::AuthExportedAuthorization] = &TelegramClient::handleExportedAuthorization;
 
     return map;
 }
@@ -60,7 +61,13 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     readMutex(QMutex::Recursive),
     msgMutex(QMutex::Recursive),
     networkSession(0),
-    dcConfig()
+    dcConfig(),
+    currentDc(DC_NUMBER),
+    currentIp(DC_IP),
+    currentPort(DC_PORT),
+    migrateDc(),
+    importId(),
+    importBytes()
 {
     session.deserialize(sessionFile.value("session").toMap());
 
@@ -140,9 +147,10 @@ void TelegramClient::start()
 {
     //if (isOpened()) return;
     stop();
+    if (currentIp.isEmpty() || !currentPort) return;
 
     changeState(CONNECTING);
-    socket.connectToHost(DC_IP, DC_PORT);
+    socket.connectToHost(currentIp, currentPort);
 }
 
 void TelegramClient::stop()
@@ -150,9 +158,56 @@ void TelegramClient::stop()
     if (!isOpened()) return;
 
     socket.abort();
-    socket.waitForDisconnected();
     changeState(STOPPED);
     sync();
+}
+
+void TelegramClient::reconnectToDC(qint32 dcId)
+{
+    TGOBJECT(exp, TLType::AuthExportAuthorizationMethod);
+    exp["dc_id"] = migrateDc = dcId;
+
+    sendMTObject<&writeTLMethodAuthExportAuthorization>(exp);
+}
+
+void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
+{
+    if (!migrateDc) return;
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLAuthExportedAuthorization(packet, var);
+    TelegramObject obj = var.toMap();
+
+    importId = obj["id"].toInt();
+    importBytes = obj["bytes"].toByteArray();
+
+    stop();
+
+    TelegramVector options = dcConfig["dc_options"].toList();
+    QString newIp;
+    qint32 newPort;
+    for (qint32 i = 0; i < options.length(); ++i) {
+        TelegramObject dcOption = options[i].toMap();
+        if (dcOption["id"].toInt() != migrateDc || (dcOption["flags"].toUInt() & 2)) continue; //Ignore media only DCs.
+        QString ip = dcOption["ip_address"].toString();
+        if (ip.isEmpty()) continue;
+        if (newIp.isEmpty() || !(dcOption["flags"].toUInt() & 1)) { //Prefer non IPV6.
+            newIp = ip;
+            newPort = dcOption["port"].toInt();
+        }
+    }
+
+    currentDc = migrateDc;
+    currentPort = newPort;
+    currentIp = newIp;
+    session.authKey = AuthKey();
+
+#ifndef QT_NO_DEBUG_OUTPUT
+    qDebug() << "Migrating to DC" << migrateDc;
+#endif
+
+    start();
 }
 
 void TelegramClient::socket_connected()
@@ -164,9 +219,7 @@ void TelegramClient::socket_connected()
 #endif
 
     //Init MTProto transport
-    QDataStream stream(&socket);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    stream << 0xeeeeeeee;
+    socket.putChar(0xef);
 
     //If we are authorized - skip to request DC config
     if (isAuthorized()) {
@@ -231,7 +284,7 @@ void TelegramClient::socket_readyRead()
         //Reading message id
         readUInt64(message, id);
         QByteArray plainData;
-        qint64 mtMsgId = 0;
+        qint64 mtMsgId;
 
         if (!id.toULongLong()) {
 #ifndef QT_NO_DEBUG_OUTPUT
@@ -310,9 +363,14 @@ void TelegramClient::sendMessage(QByteArray raw)
 {
     if (!isOpened()) return;
 
-    QDataStream stream(&socket);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    stream << raw.length();
+    qint32 length = raw.length() / 4;
+    if (length >= 127) {
+        QByteArray header(4, 0);
+        qToLittleEndian(length, (uchar*) header.data());
+        header.resize(3);
+        socket.putChar(127);
+        socket.write(header);
+    } else socket.putChar(length);
 
     socket.write(raw);
 }
@@ -321,10 +379,15 @@ QByteArray TelegramClient::readMessage()
 {
     if (!isOpened() || !socket.bytesAvailable()) return QByteArray();
 
-    QDataStream stream(&socket);
-    stream.setByteOrder(QDataStream::LittleEndian);
-    qint32 length;
-    stream >> length;
+    QByteArray header(4, 0);
+    socket.read(header.data(), 1);
+    qint32 length = header.at(0) & 0xFF;
+    if (length >= 127) {
+        socket.read(header.data(), 3);
+        length = qFromLittleEndian<qint32>((uchar*) header.data());
+    }
+
+    length *= 4;
 
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket.bytesAvailable() << "/" << length << ")";
@@ -548,7 +611,7 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data, qint64 mtm)
     TGOBJECT(clientDHInnerData, MTType::ClientDHInnerData);
     clientDHInnerData["nonce"] = nonce;
     clientDHInnerData["server_nonce"] = serverNonce;
-    clientDHInnerData["retry_id"] = retryId++;
+    clientDHInnerData["retry_id"] = 0; //retryId++; //TODO retry id
     clientDHInnerData["g_b"] = fromBig(mr.Exponentiate(bg, bb));
 
     TelegramPacket clientDHInnerDataPacket;
@@ -659,11 +722,11 @@ qint32 TelegramClient::generateSequence(bool confirmed)
     return result;
 }
 
-qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
+void TelegramClient::sendMsgsAck()
 {
-    if (state < AUTHORIZED) return 0;
+    if (!apiReady()) return;
     //TODO: add timer send timeout
-    while (!ignoreConfirm && !confirm.isEmpty()) {
+    while (!confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);
 
         TelegramVector msgIds;
@@ -676,6 +739,12 @@ qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
         msgsAck["msg_ids"] = msgIds;
         sendMTObject<&writeMTMsgsAck>(msgsAck, true);
     }
+}
+
+qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm)
+{
+    if (state < AUTHORIZED) return 0;
+    if (!ignoreConfirm) sendMsgsAck();
 
     if (raw.isEmpty()) return 0;
 

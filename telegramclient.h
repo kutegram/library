@@ -50,6 +50,16 @@ private:
 
     TelegramObject dcConfig;
 
+    //TODO Move this to session.
+    qint32 currentDc;
+    qint32 currentPort;
+    QString currentIp;
+
+    //TODO Move this to session.
+    qint32 migrateDc;
+    qint32 importId;
+    QByteArray importBytes;
+
     State state;
 
     QMutex readMutex;
@@ -59,6 +69,7 @@ private:
     template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false);
     qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false);
     void sendPlainPacket(QByteArray raw);
+    //TODO use timer and floodrate
     void sendMessage(QByteArray raw);
     QByteArray readMessage();
     void handleMessage(QByteArray messageData, qint64 mtm);
@@ -67,6 +78,7 @@ private:
     qint32 generateSequence(bool confirmed);
     void changeState(State state);
 
+    void sendMsgsAck();
 public:
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
@@ -90,6 +102,7 @@ public:
     void handleDialogs(QByteArray data, qint64 mtm);
     void handleDialogsSlice(QByteArray data, qint64 mtm);
     void handleFile(QByteArray data, qint64 mtm);
+    void handleExportedAuthorization(QByteArray data, qint64 mtm);
 
     void initConnection();
 
@@ -108,6 +121,7 @@ public:
     void getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
     qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
 
+    void reconnectToDC(qint32 dcId);
 signals:
     void handleResponse(QByteArray data, qint32 conId, qint64 mtm);
     void stateChanged(State state);

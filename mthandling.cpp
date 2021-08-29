@@ -2,6 +2,7 @@
 
 #include "mtschema.h"
 #include "cryptopp/gzip.h"
+#include <QStringList>
 
 using namespace CryptoPP;
 
@@ -114,7 +115,25 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
 
     emit gotRPCError(rpcError["error_code"].toInt(), rpcError["error_message"].toString());
 
-    if (rpcError["error_message"].toString() == "AUTH_KEY_UNREGISTERED") {
+    QString errorMsg = rpcError["error_message"].toString();
+
+    if (errorMsg.startsWith("PHONE_MIGRATE_")) {
+        reconnectToDC(errorMsg.split("PHONE_MIGRATE_").last().toInt());
+        //TODO resend request
+    }
+    else if (errorMsg.startsWith("FILE_MIGRATE_")) {
+        reconnectToDC(errorMsg.split("FILE_MIGRATE_").last().toInt());
+        //TODO resend request
+    }
+    else if (errorMsg.startsWith("USER_MIGRATE_")) {
+        reconnectToDC(errorMsg.split("USER_MIGRATE_").last().toInt());
+        //TODO resend request
+    }
+    else if (errorMsg.startsWith("NETWORK_MIGRATE_")) {
+        reconnectToDC(errorMsg.split("NETWORK_MIGRATE_").last().toInt());
+        //TODO resend request
+    }
+    else if (errorMsg == "AUTH_KEY_UNREGISTERED") {
         stop();
 
         session.authKey = AuthKey();
@@ -128,10 +147,6 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     //PHONE_CODE_INVALID
     //SESSION_PASSWORD_NEEDED
     //FLOOD_WAIT_
-    //PHONE_MIGRATE_
-    //FILE_MIGRATE_
-    //USER_MIGRATE_
-    //NETWORK_MIGRATE_
 }
 
 void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
@@ -144,7 +159,14 @@ void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
 
     changeState(INITED);
 
-    if (isLoggedIn()) {
+    if (migrateDc) {
+        TGOBJECT(imp, TLType::AuthImportAuthorizationMethod);
+        imp["id"] = importId;
+        imp["bytes"] = importBytes;
+
+        sendMTObject<&writeTLMethodAuthImportAuthorization>(imp);
+    }
+    else if (isLoggedIn()) {
         changeState(LOGGED_IN);
     }
 
