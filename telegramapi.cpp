@@ -64,10 +64,10 @@ void TelegramClient::handleAuthorization(QByteArray data, qint64 mtm)
     readTLAuthAuthorization(packet, var);
     TelegramObject auth = var.toMap();
 
-    migrateDc = 0;
+    session.migrateDc = 0;
     session.userId = auth["user"].toMap()["id"].toInt();
-    changeState(LOGGED_IN);
     sync();
+    changeState(LOGGED_IN);
 
     emit gotAuthorization();
 }

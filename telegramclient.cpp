@@ -64,13 +64,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     readMutex(QMutex::Recursive),
     msgMutex(QMutex::Recursive),
     networkSession(0),
-    dcConfig(),
-    currentDc(DC_NUMBER),
-    currentIp(DC_IP),
-    currentPort(DC_PORT),
-    migrateDc(),
-    importId(),
-    importBytes()
+    dcConfig()
 {
     session.deserialize(sessionFile.value("session").toMap());
 
@@ -150,10 +144,15 @@ void TelegramClient::start()
 {
     //if (isOpened()) return;
     stop();
-    if (currentIp.isEmpty() || !currentPort) return;
+    if (session.currentIp.isEmpty() || !session.currentPort) {
+        session.currentIp = DC_IP;
+        session.currentPort = DC_PORT;
+        session.currentDc = DC_NUMBER;
+        sync();
+    }
 
     changeState(CONNECTING);
-    socket.connectToHost(currentIp, currentPort);
+    socket.connectToHost(session.currentIp, session.currentPort);
 }
 
 void TelegramClient::stop()
@@ -168,22 +167,23 @@ void TelegramClient::stop()
 void TelegramClient::reconnectToDC(qint32 dcId)
 {
     TGOBJECT(exp, TLType::AuthExportAuthorizationMethod);
-    exp["dc_id"] = migrateDc = dcId;
+    exp["dc_id"] = session.migrateDc = dcId;
+    sync();
 
     sendMTObject<&writeTLMethodAuthExportAuthorization>(exp);
 }
 
 void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
 {
-    if (!migrateDc) return;
+    if (!session.migrateDc) return;
     TelegramPacket packet(data);
     QVariant var;
 
     readTLAuthExportedAuthorization(packet, var);
     TelegramObject obj = var.toMap();
 
-    importId = obj["id"].toInt();
-    importBytes = obj["bytes"].toByteArray();
+    session.importId = obj["id"].toInt();
+    session.importBytes = obj["bytes"].toByteArray();
 
     stop();
 
@@ -192,7 +192,7 @@ void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
     qint32 newPort;
     for (qint32 i = 0; i < options.length(); ++i) {
         TelegramObject dcOption = options[i].toMap();
-        if (dcOption["id"].toInt() != migrateDc || (dcOption["flags"].toUInt() & 2)) continue; //Ignore media only DCs.
+        if (dcOption["id"].toInt() != session.migrateDc || (dcOption["flags"].toUInt() & 2)) continue; //Ignore media only DCs.
         QString ip = dcOption["ip_address"].toString();
         if (ip.isEmpty()) continue;
         if (newIp.isEmpty() || !(dcOption["flags"].toUInt() & 1)) { //Prefer non IPV6.
@@ -201,13 +201,15 @@ void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
         }
     }
 
-    currentDc = migrateDc;
-    currentPort = newPort;
-    currentIp = newIp;
+    session.currentDc = session.migrateDc;
+    session.currentPort = newPort;
+    session.currentIp = newIp;
     session.authKey = AuthKey();
 
+    sync();
+
 #ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << "Migrating to DC" << migrateDc;
+    qDebug() << "Migrating to DC" << session.migrateDc;
 #endif
 
     start();

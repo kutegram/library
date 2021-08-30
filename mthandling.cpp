@@ -159,10 +159,10 @@ void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
 
     changeState(INITED);
 
-    if (migrateDc) {
+    if (session.migrateDc) {
         TGOBJECT(imp, TLType::AuthImportAuthorizationMethod);
-        imp["id"] = importId;
-        imp["bytes"] = importBytes;
+        imp["id"] = session.importId;
+        imp["bytes"] = session.importBytes;
 
         sendMTObject<&writeTLMethodAuthImportAuthorization>(imp);
     }

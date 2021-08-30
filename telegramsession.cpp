@@ -1,6 +1,7 @@
 #include "telegramsession.h"
 
 #include "crypto.h"
+#include "apivalues.h"
 
 AuthKey::AuthKey() :
     key(), id(), auxHash()
@@ -56,7 +57,13 @@ QVariantMap AuthKey::serialize()
 }
 
 TelegramSession::TelegramSession() :
-    authKey(), salt(), timeOffset(), id(), lastMessageId(), sequence(), userId()
+    authKey(), salt(), timeOffset(), id(), lastMessageId(), sequence(), userId(),
+    currentDc(DC_NUMBER),
+    currentIp(DC_IP),
+    currentPort(DC_PORT),
+    migrateDc(),
+    importId(),
+    importBytes()
 {
 }
 
@@ -69,6 +76,17 @@ TelegramSession& TelegramSession::deserialize(QVariantMap obj)
     lastMessageId = obj["lastMessageId"].toLongLong();
     sequence = obj["sequence"].toInt();
     userId = obj["userId"].toInt();
+    currentDc = obj["currentDc"].toInt();
+    currentIp = obj["currentIp"].toString();
+    currentPort = obj["currentPort"].toInt();
+    if (!currentPort || !currentDc || currentIp.isEmpty()) {
+        currentIp = DC_IP;
+        currentPort = DC_PORT;
+        currentDc = DC_NUMBER;
+    }
+    migrateDc = obj["migrateDc"].toInt();
+    importId = obj["importId"].toInt();
+    importBytes = obj["importBytes"].toByteArray();
 
     return *this;
 }
@@ -84,6 +102,12 @@ QVariantMap TelegramSession::serialize()
     obj["lastMessageId"] = lastMessageId;
     obj["sequence"] = sequence;
     obj["userId"] = userId;
+    obj["currentDc"] = currentDc;
+    obj["currentIp"] = currentIp;
+    obj["currentPort"] = currentPort;
+    obj["migrateDc"] = migrateDc;
+    obj["importId"] = importId;
+    obj["importBytes"] = importBytes;
 
     return obj;
 }

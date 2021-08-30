@@ -32,6 +32,13 @@ struct TelegramSession
     qint64 lastMessageId;
     qint32 sequence;
 
+    qint32 currentDc;
+    qint32 currentPort;
+    QString currentIp;
+    qint32 migrateDc;
+    qint32 importId;
+    QByteArray importBytes;
+
     TelegramSession& deserialize(QVariantMap obj);
     QVariantMap serialize();
 };

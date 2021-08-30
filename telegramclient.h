@@ -50,16 +50,6 @@ private:
 
     TelegramObject dcConfig;
 
-    //TODO Move this to session.
-    qint32 currentDc;
-    qint32 currentPort;
-    QString currentIp;
-
-    //TODO Move this to session.
-    qint32 migrateDc;
-    qint32 importId;
-    QByteArray importBytes;
-
     State state;
 
     QMutex readMutex;
