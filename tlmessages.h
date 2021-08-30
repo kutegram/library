@@ -102,10 +102,14 @@ struct TLInputFileLocation
 
 struct TLMessage
 {
+    //TODO
     TLType::Types type;
     qint32 id;
     qint32 date;
     TLPeer peer;
+    QString message;
+    QVariantMap action;
+    QVariantMap media;
 
     TLMessage(QVariantMap var = QVariantMap());
 };

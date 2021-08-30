@@ -123,7 +123,10 @@ TLMessage::TLMessage(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
     date(var["date"].toInt()),
-    peer(var["peer_id"].toMap())
+    peer(var["peer_id"].toMap()),
+    message(var["message"].toString()),
+    action(var["action"].toMap()),
+    media(var["media"].toMap())
 {
 
 }
