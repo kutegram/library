@@ -42,7 +42,7 @@ TLPeer::TLPeer(TLUser u) :
 TLDialog::TLDialog(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     peer(var["peer"].toMap()),
-    pinned(var["flags"].toUInt() & 4),
+    pinned(var["pinned"].toBool()),
     topMessage(var["top_message"].toInt())
 {
 
@@ -58,7 +58,7 @@ TLFileLocation::TLFileLocation(QVariantMap var) :
 
 TLInputFileLocation::TLInputFileLocation(QVariantMap var) :
     type((TLType::Types) GETID(var)),
-    big(var["flags"].toUInt() & 1),
+    big(var["big"].toBool()),
     peer(var["peer"].toMap()),
     volumeId(var["volume_id"].toLongLong()),
     localId(var["local_id"].toInt())
@@ -95,7 +95,7 @@ QVariantMap TLInputFileLocation::serialize()
 
 TLProfilePhoto::TLProfilePhoto(QVariantMap var) :
     type((TLType::Types) GETID(var)),
-    hasVideo(var["flags"].toUInt() & 1),
+    hasVideo(var["has_video"].toBool()),
     dcId(var["dc_id"].toInt()),
     photoId(var["photo_id"].toInt()),
     photoSmall(var["photo_small"].toMap()),
@@ -252,7 +252,7 @@ QVariantMap TLInputPeer::serialize()
 TLUser::TLUser(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
-    self(var["flags"].toUInt() & 1024),
+    self(var["self"].toBool()),
     firstName(var["first_name"].toString()),
     lastName(var["last_name"].toString()),
     username(var["username"].toString()),
@@ -344,4 +344,56 @@ void TelegramClient::handleDialogsSlice(QByteArray data, qint64 mtm)
     }
 
     emit gotDialogs(obj["count"].toInt(), dialogs, messages, chats, users);
+}
+
+void TelegramClient::getHistory(TLInputPeer peer, qint32 offsetId, qint32 offsetDate, qint32 addOffset, qint32 limit)
+{
+    TGOBJECT(getHistory, TLType::MessagesGetHistoryMethod);
+
+    getHistory["peer"] = peer.serialize();
+    getHistory["offset_id"] = offsetId;
+    getHistory["offset_date"] = offsetDate;
+    getHistory["add_offset"] = addOffset;
+    getHistory["limit"] = limit;
+
+    sendMTObject<&writeTLMethodMessagesGetHistory>(getHistory);
+}
+
+void TelegramClient::handleMessages(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLMessagesMessages(packet, var);
+    TelegramObject obj = var.toMap();
+
+    TelegramVector vector = obj["messages"].toList();
+    QList<TLMessage> messages;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        messages << TLMessage(vector[i].toMap());
+    }
+
+    vector = obj["chats"].toList();
+    QList<TLChat> chats;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        chats << TLChat(vector[i].toMap());
+    }
+
+    vector = obj["users"].toList();
+    QList<TLUser> users;
+    for (qint32 i = 0; i < vector.size(); ++i) {
+        users << TLUser(vector[i].toMap());
+    }
+
+    emit gotMessages(obj["count"].toInt(), messages, chats, users, obj["next_rate"].toInt(), obj["offset_id_offset"].toInt(), obj["inexact"].toBool());
+}
+
+void TelegramClient::handleMessagesSlice(QByteArray data, qint64 mtm)
+{
+    handleMessages(data, mtm);
+}
+
+void TelegramClient::handleChannelMessages(QByteArray data, qint64 mtm)
+{
+    handleMessages(data, mtm);
 }

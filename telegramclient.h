@@ -93,6 +93,9 @@ public:
     void handleDialogsSlice(QByteArray data, qint64 mtm);
     void handleFile(QByteArray data, qint64 mtm);
     void handleExportedAuthorization(QByteArray data, qint64 mtm);
+    void handleMessages(QByteArray data, qint64 mtm);
+    void handleMessagesSlice(QByteArray data, qint64 mtm);
+    void handleChannelMessages(QByteArray data, qint64 mtm);
 
     void initConnection();
 
@@ -109,6 +112,7 @@ public:
     void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
     void getUpdatesState(); //TODO updates.state handle
     void getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
+    void getHistory(TLInputPeer peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
     qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
 
     void reconnectToDC(qint32 dcId);
@@ -127,6 +131,7 @@ signals:
     void gotAuthorization();
 
     void gotDialogs(qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
+    void gotMessages(qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
     void gotFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes);
 
 public slots:

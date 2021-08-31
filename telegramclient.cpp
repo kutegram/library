@@ -44,6 +44,9 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::MessagesDialogsSlice] = &TelegramClient::handleDialogsSlice;
     map[TLType::UploadFile] = &TelegramClient::handleFile;
     map[TLType::AuthExportedAuthorization] = &TelegramClient::handleExportedAuthorization;
+    map[TLType::MessagesMessages] = &TelegramClient::handleMessages;
+    map[TLType::MessagesMessagesSlice] = &TelegramClient::handleMessagesSlice;
+    map[TLType::MessagesChannelMessages] = &TelegramClient::handleChannelMessages;
 
     return map;
 }
