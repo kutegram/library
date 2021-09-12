@@ -147,6 +147,7 @@ void TelegramClient::start()
 {
     //if (isOpened()) return;
     stop();
+
     if (session.currentIp.isEmpty() || !session.currentPort) {
         session.currentIp = DC_IP;
         session.currentPort = DC_PORT;
@@ -875,4 +876,13 @@ void TelegramClient::networkSession_opened()
     else id = config.identifier();
 
     sessionFile.setValue("network", id);
+}
+
+void TelegramClient::reset()
+{
+    stop();
+
+    session.authKey = AuthKey();
+    session.userId = 0;
+    sync();
 }

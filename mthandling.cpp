@@ -134,13 +134,8 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
         //TODO resend request
     }
     else if (errorMsg == "AUTH_KEY_UNREGISTERED") {
-        stop();
-
-        session.authKey = AuthKey();
-        session.userId = 0;
-
         //TODO reauth
-        sync();
+        reset();
     }
 
     //TODO handle errors

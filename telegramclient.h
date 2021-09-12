@@ -117,6 +117,7 @@ public:
 
     void reconnectToDC(qint32 dcId);
 signals:
+    //TODO: add qint64 mtMessageId everywhere
     void handleResponse(QByteArray data, qint32 conId, qint64 mtm);
     void stateChanged(State state);
 
@@ -138,6 +139,7 @@ public slots:
     void start();
     void stop();
     void sync();
+    void reset();
 
 private slots:
     void socket_connected();
