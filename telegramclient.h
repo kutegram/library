@@ -35,6 +35,7 @@ class TelegramClient : public QObject
 {
     Q_OBJECT
 private:
+    //TODO move users, chats, messages, MTProto message, confirm to session
     TelegramSession session;
     QTcpSocket socket;
     QNetworkSession* networkSession;
@@ -133,8 +134,8 @@ signals:
 
     void gotDialogs(qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
     void gotMessages(qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
-    void gotFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes);
-
+    void gotFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes); //TODO rename to gotFilePart
+    //TODO void gotFullFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes);
 public slots:
     void start();
     void stop();
