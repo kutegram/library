@@ -3,6 +3,8 @@
 #include "telegramclient.h"
 #include "tlschema.h"
 #include <QList>
+#include "crypto.h"
+#include <QtCore>
 
 #ifndef QT_NO_DEBUG_OUTPUT
 #include <QtDebug>
@@ -404,6 +406,7 @@ qint64 TelegramClient::sendMessage(TLInputPeer peer, QString message)
 
     sendMessage["peer"] = peer.serialize();
     sendMessage["message"] = message;
+    sendMessage["random_id"] = qFromLittleEndian<qint64>((const uchar*) randomBytes(sizeof(qint64)).constData());
 
     return sendMTObject< &writeTLMethodMessagesSendMessage >(sendMessage);
 }
