@@ -435,7 +435,7 @@ void TelegramClient::handleMessage(QByteArray messageData, qint64 mtm)
         (this->*method)(messageData, mtm);
     }
 
-    emit handleResponse(messageData, conId, mtm);
+    emit handleResponse(mtm, messageData, conId);
 }
 
 void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)

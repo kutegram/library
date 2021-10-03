@@ -308,7 +308,7 @@ void TelegramClient::handleDialogs(QByteArray data, qint64 mtm)
         users << TLUser(vector[i].toMap());
     }
 
-    emit gotDialogs(0, dialogs, messages, chats, users);
+    emit gotDialogs(mtm, 0, dialogs, messages, chats, users);
 }
 
 void TelegramClient::handleDialogsSlice(QByteArray data, qint64 mtm)
@@ -343,7 +343,7 @@ void TelegramClient::handleDialogsSlice(QByteArray data, qint64 mtm)
         users << TLUser(vector[i].toMap());
     }
 
-    emit gotDialogs(obj["count"].toInt(), dialogs, messages, chats, users);
+    emit gotDialogs(mtm, obj["count"].toInt(), dialogs, messages, chats, users);
 }
 
 void TelegramClient::getHistory(TLInputPeer peer, qint32 offsetId, qint32 offsetDate, qint32 addOffset, qint32 limit)
@@ -385,7 +385,7 @@ void TelegramClient::handleMessages(QByteArray data, qint64 mtm)
         users << TLUser(vector[i].toMap());
     }
 
-    emit gotMessages(obj["count"].toInt(), messages, chats, users, obj["next_rate"].toInt(), obj["offset_id_offset"].toInt(), obj["inexact"].toBool());
+    emit gotMessages(mtm, obj["count"].toInt(), messages, chats, users, obj["next_rate"].toInt(), obj["offset_id_offset"].toInt(), obj["inexact"].toBool());
 }
 
 void TelegramClient::handleMessagesSlice(QByteArray data, qint64 mtm)

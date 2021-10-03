@@ -118,8 +118,7 @@ public:
 
     void reconnectToDC(qint32 dcId);
 signals:
-    //TODO: add qint64 mtMessageId everywhere
-    void handleResponse(QByteArray data, qint32 conId, qint64 mtm);
+    void handleResponse(qint64 mtm, QByteArray data, qint32 conId);
     void stateChanged(State state);
 
     void gotSocketError(QAbstractSocket::SocketError error);
@@ -132,10 +131,10 @@ signals:
     void gotSentCode(QString phone_code_hash); //TODO timeout and more params
     void gotAuthorization();
 
-    void gotDialogs(qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
-    void gotMessages(qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
-    void gotFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes); //TODO rename to gotFilePart
-    //TODO void gotFullFile(qint64 mtMessageId, TLType::Types type, qint32 mtime, QByteArray bytes);
+    void gotDialogs(qint64 mtm, qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
+    void gotMessages(qint64 mtm, qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
+    void gotFilePart(qint64 mtm, TLType::Types type, qint32 mtime, QByteArray bytes);
+    //TODO void gotFullFile(qint64 mtm, TLType::Types type, qint32 mtime, QByteArray bytes);
 public slots:
     void start();
     void stop();
