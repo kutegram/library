@@ -262,7 +262,7 @@ TLUser::TLUser(QVariantMap var) :
 
 }
 
-void TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TLInputPeer offsetPeer, qint32 limit)
+qint64 TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TLInputPeer offsetPeer, qint32 limit)
 {
     TGOBJECT(getDialogs, TLType::MessagesGetDialogsMethod);
 
@@ -273,7 +273,7 @@ void TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TLInputPeer 
     getDialogs["offset_peer"] = offsetPeer.serialize();
     getDialogs["limit"] = limit;
 
-    sendMTObject< &writeTLMethodMessagesGetDialogs >(getDialogs);
+    return sendMTObject< &writeTLMethodMessagesGetDialogs >(getDialogs);
 }
 
 void TelegramClient::handleDialogs(QByteArray data, qint64 mtm)
@@ -346,7 +346,7 @@ void TelegramClient::handleDialogsSlice(QByteArray data, qint64 mtm)
     emit gotDialogs(mtm, obj["count"].toInt(), dialogs, messages, chats, users);
 }
 
-void TelegramClient::getHistory(TLInputPeer peer, qint32 offsetId, qint32 offsetDate, qint32 addOffset, qint32 limit)
+qint64 TelegramClient::getHistory(TLInputPeer peer, qint32 offsetId, qint32 offsetDate, qint32 addOffset, qint32 limit)
 {
     TGOBJECT(getHistory, TLType::MessagesGetHistoryMethod);
 
@@ -356,7 +356,7 @@ void TelegramClient::getHistory(TLInputPeer peer, qint32 offsetId, qint32 offset
     getHistory["add_offset"] = addOffset;
     getHistory["limit"] = limit;
 
-    sendMTObject<&writeTLMethodMessagesGetHistory>(getHistory);
+    return sendMTObject<&writeTLMethodMessagesGetHistory>(getHistory);
 }
 
 void TelegramClient::handleMessages(QByteArray data, qint64 mtm)
@@ -396,4 +396,14 @@ void TelegramClient::handleMessagesSlice(QByteArray data, qint64 mtm)
 void TelegramClient::handleChannelMessages(QByteArray data, qint64 mtm)
 {
     handleMessages(data, mtm);
+}
+
+qint64 TelegramClient::sendMessage(TLInputPeer peer, QString message)
+{
+    TGOBJECT(sendMessage, TLType::MessagesSendMessageMethod);
+
+    sendMessage["peer"] = peer.serialize();
+    sendMessage["message"] = message;
+
+    return sendMTObject< &writeTLMethodMessagesSendMessage >(sendMessage);
 }

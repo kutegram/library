@@ -2,13 +2,13 @@
 
 #include "tlschema.h"
 
-void TelegramClient::exportLoginToken()
+qint64 TelegramClient::exportLoginToken()
 {
     TGOBJECT(exportToken, TLType::AuthExportLoginTokenMethod);
     exportToken["api_id"] = APP_ID;
     exportToken["api_hash"] = APP_HASH;
 
-    sendMTObject<&writeTLMethodAuthExportLoginToken>(exportToken);
+    return sendMTObject<&writeTLMethodAuthExportLoginToken>(exportToken);
 }
 
 void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)
@@ -19,10 +19,10 @@ void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)
     readTLAuthLoginToken(packet, var);
     TelegramObject loginToken = var.toMap();
 
-    emit gotLoginToken(loginToken["expires"].toInt(), "tg://login?token=" + QString::fromAscii(loginToken["token"].toByteArray().toBase64()).replace("+", "-").replace("/", "_"));
+    emit gotLoginToken(mtm, loginToken["expires"].toInt(), "tg://login?token=" + QString::fromAscii(loginToken["token"].toByteArray().toBase64()).replace("+", "-").replace("/", "_"));
 }
 
-void TelegramClient::sendCode(QString phone_number)
+qint64 TelegramClient::sendCode(QString phone_number)
 {
     TGOBJECT(sendCode, TLType::AuthSendCodeMethod);
     sendCode["phone_number"] = phone_number;
@@ -32,7 +32,7 @@ void TelegramClient::sendCode(QString phone_number)
     TGOBJECT(codeSettings, TLType::CodeSettings);
     sendCode["settings"] = codeSettings;
 
-    sendMTObject<&writeTLMethodAuthSendCode>(sendCode);
+    return sendMTObject<&writeTLMethodAuthSendCode>(sendCode);
 }
 
 void TelegramClient::handleSentCode(QByteArray data, qint64 mtm)
@@ -43,17 +43,17 @@ void TelegramClient::handleSentCode(QByteArray data, qint64 mtm)
     readTLAuthSentCode(packet, var);
     TelegramObject sentCode = var.toMap();
 
-    emit gotSentCode(sentCode["phone_code_hash"].toString());
+    emit gotSentCode(mtm, sentCode["phone_code_hash"].toString());
 }
 
-void TelegramClient::signIn(QString phone_number, QString phone_code_hash, QString phone_code)
+qint64 TelegramClient::signIn(QString phone_number, QString phone_code_hash, QString phone_code)
 {
     TGOBJECT(signIn, TLType::AuthSignInMethod);
     signIn["phone_number"] = phone_number;
     signIn["phone_code_hash"] = phone_code_hash;
     signIn["phone_code"] = phone_code;
 
-    sendMTObject<&writeTLMethodAuthSignIn>(signIn);
+    return sendMTObject<&writeTLMethodAuthSignIn>(signIn);
 }
 
 void TelegramClient::handleAuthorization(QByteArray data, qint64 mtm)
@@ -69,12 +69,12 @@ void TelegramClient::handleAuthorization(QByteArray data, qint64 mtm)
     sync();
     changeState(LOGGED_IN);
 
-    emit gotAuthorization();
+    emit gotAuthorization(mtm);
 }
 
-void TelegramClient::getUpdatesState()
+qint64 TelegramClient::getUpdatesState()
 {
     TGOBJECT(getState, TLType::UpdatesGetStateMethod);
 
-    sendMTObject<&writeTLMethodUpdatesGetState>(getState);
+    return sendMTObject<&writeTLMethodUpdatesGetState>(getState);
 }

@@ -21,7 +21,7 @@ void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
     session.salt = badServerSalt["new_server_salt"].toULongLong();
     sendMTPacket(messages[badServerSalt["bad_msg_id"].toLongLong()]);
 
-    emit gotMessageError(badServerSalt["error_code"].toInt());
+    emit gotMessageError(mtm, badServerSalt["error_code"].toInt());
 }
 
 void TelegramClient::handleRpcResult(QByteArray data, qint64 mtm)
@@ -80,7 +80,7 @@ void TelegramClient::handleBadMsgNotification(QByteArray data, qint64 mtm)
     qDebug() << "Got a bad msg notification:" << badMsgNotify["error_code"].toInt();
 #endif
 
-    emit gotMessageError(badMsgNotify["error_code"].toInt());
+    emit gotMessageError(mtm, badMsgNotify["error_code"].toInt());
 }
 
 void TelegramClient::handleNewSessionCreated(QByteArray data, qint64 mtm)
@@ -113,7 +113,7 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     qDebug() << "Got RPC error:" << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 #endif
 
-    emit gotRPCError(rpcError["error_code"].toInt(), rpcError["error_message"].toString());
+    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString());
 
     QString errorMsg = rpcError["error_message"].toString();
 

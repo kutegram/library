@@ -108,13 +108,14 @@ public:
 
     State getState();
 
-    void exportLoginToken(); //TODO QR-code login
-    void sendCode(QString phone_number);
-    void signIn(QString phone_number, QString phone_code_hash, QString phone_code);
-    void getUpdatesState(); //TODO updates.state handle
-    void getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
-    void getHistory(TLInputPeer peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
+    qint64 exportLoginToken(); //TODO QR-code login
+    qint64 sendCode(QString phone_number);
+    qint64 signIn(QString phone_number, QString phone_code_hash, QString phone_code);
+    qint64 getUpdatesState(); //TODO updates.state handle
+    qint64 getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
+    qint64 getHistory(TLInputPeer peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
     qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
+    qint64 sendMessage(TLInputPeer peer, QString message); //TODO handle result: Updates
 
     void reconnectToDC(qint32 dcId);
 signals:
@@ -124,12 +125,12 @@ signals:
     void gotSocketError(QAbstractSocket::SocketError error);
     void gotMTError(qint32 error_code);
     void gotDHError(bool fail);
-    void gotMessageError(qint32 error_code);
-    void gotRPCError(qint32 error_code, QString error_message);
+    void gotMessageError(qint64 mtm, qint32 error_code);
+    void gotRPCError(qint64 mtm, qint32 error_code, QString error_message);
 
-    void gotLoginToken(qint32 expires, QString tokenUrl);
-    void gotSentCode(QString phone_code_hash); //TODO timeout and more params
-    void gotAuthorization();
+    void gotLoginToken(qint64 mtm, qint32 expires, QString tokenUrl);
+    void gotSentCode(qint64 mtm, QString phone_code_hash); //TODO timeout and more params
+    void gotAuthorization(qint64 mtm);
 
     void gotDialogs(qint64 mtm, qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
     void gotMessages(qint64 mtm, qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
