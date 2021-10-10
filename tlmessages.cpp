@@ -16,13 +16,13 @@ TLPeer::TLPeer(QVariantMap var) :
 {
     switch (GETID(var)) {
     case TLType::PeerUser:
-        id = var["user_id"].toInt();
+        id = var["user_id"].toLongLong();
         break;
     case TLType::PeerChat:
-        id = var["chat_id"].toInt();
+        id = var["chat_id"].toLongLong();
         break;
     case TLType::PeerChannel:
-        id = var["channel_id"].toInt();
+        id = var["channel_id"].toLongLong();
         break;
     }
 }
@@ -108,7 +108,7 @@ TLProfilePhoto::TLProfilePhoto(QVariantMap var) :
 
 TLChat::TLChat(QVariantMap var) :
     type((TLType::Types) GETID(var)),
-    id(var["id"].toInt()),
+    id(var["id"].toLongLong()),
     title(var["title"].toString()),
     accessHash(var["access_hash"].toLongLong()),
     photo(var["photo"].toMap())
@@ -190,15 +190,15 @@ TLInputPeer::TLInputPeer(QVariantMap var) :
 {
     switch (GETID(var)) {
     case TLType::InputPeerChat:
-        id = var["chat_id"].toInt();
+        id = var["chat_id"].toLongLong();
         break;
     case TLType::InputPeerUser:
     case TLType::InputPeerUserFromMessage:
-        id = var["user_id"].toInt();
+        id = var["user_id"].toLongLong();
         break;
     case TLType::InputPeerChannel:
     case TLType::InputPeerChannelFromMessage:
-        id = var["channel_id"].toInt();
+        id = var["channel_id"].toLongLong();
         break;
     }
 }
@@ -253,7 +253,7 @@ QVariantMap TLInputPeer::serialize()
 
 TLUser::TLUser(QVariantMap var) :
     type((TLType::Types) GETID(var)),
-    id(var["id"].toInt()),
+    id(var["id"].toLongLong()),
     self(var["self"].toBool()),
     firstName(var["first_name"].toString()),
     lastName(var["last_name"].toString()),

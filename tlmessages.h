@@ -29,7 +29,7 @@ struct TLProfilePhoto
 struct TLChat
 {
     TLType::Types type;
-    qint32 id;
+    qint64 id;
     QString title;
     qint64 accessHash;
     TLProfilePhoto photo;
@@ -41,7 +41,7 @@ struct TLChat
 struct TLUser
 {
     TLType::Types type;
-    qint32 id;
+    qint64 id;
     bool self;
     QString firstName;
     QString lastName;
@@ -55,7 +55,7 @@ struct TLUser
 struct TLPeer
 {
     TLType::Types type;
-    qint32 id;
+    qint64 id;
 
     TLPeer(TLChat c);
     TLPeer(TLUser u);
@@ -75,7 +75,7 @@ struct TLDialog
 struct TLInputPeer
 {
     TLType::Types type;
-    qint32 id;
+    qint64 id;
     qint32 messageId;
     qint64 accessHash;
     QVariantMap peer;
