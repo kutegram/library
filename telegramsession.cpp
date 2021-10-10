@@ -75,7 +75,7 @@ TelegramSession& TelegramSession::deserialize(QVariantMap obj)
     id = obj["id"].toLongLong();
     lastMessageId = obj["lastMessageId"].toLongLong();
     sequence = obj["sequence"].toInt();
-    userId = obj["userId"].toInt();
+    userId = obj["userId"].toLongLong();
     currentDc = obj["currentDc"].toInt();
     currentIp = obj["currentIp"].toString();
     currentPort = obj["currentPort"].toInt();

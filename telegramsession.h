@@ -24,7 +24,7 @@ struct TelegramSession
 
     //TODO currentDc, sessionExpires
 
-    qint32 userId;
+    qint64 userId;
     AuthKey authKey;
     quint64 salt;
     qint32 timeOffset;
