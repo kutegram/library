@@ -66,7 +66,9 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     sessionFile(sessionId + ".session", QSettings::IniFormat, this),
     readMutex(QMutex::Recursive),
     msgMutex(QMutex::Recursive),
+#if QT_VERSION >= 0x040702
     networkSession(0),
+#endif
     dcConfig()
 {
     session.deserialize(sessionFile.value("session").toMap());
@@ -80,6 +82,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     connect(&socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
     connect(&socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
 
+#if QT_VERSION >= 0x040702
     QNetworkConfigurationManager manager;
     if (manager.capabilities() & QNetworkConfigurationManager::NetworkSessionRequired) {
         QNetworkConfiguration config = manager.configurationFromIdentifier(sessionFile.value("network").toString());
@@ -91,6 +94,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
         connect(networkSession, SIGNAL(opened()), this, SLOT(networkSession_opened()));
         networkSession->open(); //TODO network session error handling?
     }
+#endif
 }
 
 void TelegramClient::changeState(State s)
@@ -870,12 +874,14 @@ void TelegramClient::handleDhGenRetry(QByteArray data, qint64 mtm)
 
 void TelegramClient::networkSession_opened()
 {
+#if QT_VERSION >= 0x040702
     QNetworkConfiguration config = networkSession->configuration();
     QString id;
     if (config.type() == QNetworkConfiguration::UserChoice) id = networkSession->sessionProperty(QLatin1String("UserChoiceConfiguration")).toString();
     else id = config.identifier();
 
     sessionFile.setValue("network", id);
+#endif
 }
 
 void TelegramClient::reset()

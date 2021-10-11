@@ -11,7 +11,9 @@
 #include <QSettings>
 #include "tlmessages.h"
 #include <QMutex>
+#if QT_VERSION >= 0x040702
 #include <QNetworkSession>
+#endif
 
 enum State
 {
@@ -38,7 +40,9 @@ private:
     //TODO move users, chats, messages, MTProto message, confirm to session
     TelegramSession session;
     QTcpSocket socket;
+#if QT_VERSION >= 0x040702
     QNetworkSession* networkSession;
+#endif
     QSettings sessionFile;
 
     QByteArray nonce;
