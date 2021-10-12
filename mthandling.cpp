@@ -26,8 +26,14 @@ void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
 
 void TelegramClient::handleRpcResult(QByteArray data, qint64 mtm)
 {
+    TelegramPacket packet(data);
+    packet.skipRawBytes(4); //conId
+
+    QVariant var;
+    readInt64(packet, var);
+
     data.remove(0, 12);
-    handleMessage(data, mtm);
+    handleMessage(data, var.toLongLong());
 }
 
 void TelegramClient::handleGzipPacked(QByteArray data, qint64 mtm)
