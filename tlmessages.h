@@ -111,6 +111,7 @@ struct TLMessage
     QString message;
     QVariantMap action;
     QVariantMap media;
+    TLPeer from;
 
     TLMessage(QVariantMap var = QVariantMap());
 };
