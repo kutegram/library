@@ -4,6 +4,7 @@
 #include <QVariant>
 #include "tlschema.h"
 #include "tlfiles.h"
+#include <QMetaType>
 
 struct TLFileLocation
 {
@@ -113,5 +114,11 @@ struct TLMessage
 
     TLMessage(QVariantMap var = QVariantMap());
 };
+
+Q_DECLARE_METATYPE (TLMessage)
+Q_DECLARE_METATYPE (TLChat)
+Q_DECLARE_METATYPE (TLUser)
+Q_DECLARE_METATYPE (TLDialog)
+Q_DECLARE_METATYPE (TLPeer)
 
 #endif // TLMESSAGES_H
