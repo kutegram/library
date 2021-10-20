@@ -11,7 +11,9 @@
 #include <QtCore>
 #include "tlschema.h"
 #include <QApplication>
+#if QT_VERSION >= 0x040702
 #include <QNetworkConfigurationManager>
+#endif
 #include "cryptopp/gzip.h"
 
 using namespace CryptoPP;
