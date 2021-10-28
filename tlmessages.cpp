@@ -41,6 +41,25 @@ TLPeer::TLPeer(TLUser u) :
 
 }
 
+QVariantMap TLPeer::serialize()
+{
+    TGOBJECT(obj, type);
+
+    switch (type) {
+    case TLType::PeerUser:
+        obj["user_id"] = id;
+        break;
+    case TLType::PeerChat:
+        obj["chat_id"] = id;
+        break;
+    case TLType::PeerChannel:
+        obj["channel_id"] = id;
+        break;
+    }
+
+    return obj;
+}
+
 TLDialog::TLDialog(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     peer(var["peer"].toMap()),
@@ -89,10 +108,10 @@ QVariantMap TLInputFileLocation::serialize()
         obj["peer"] = peer.serialize();
         obj["volume_id"] = volumeId;
         obj["local_id"] = localId;
-        return obj;
-    default:
-        return obj;
+        break;
     }
+
+    return obj;
 }
 
 TLProfilePhoto::TLProfilePhoto(QVariantMap var) :
@@ -121,6 +140,26 @@ bool TLChat::isChannel()
     return type == TLType::Channel || type == TLType::ChannelForbidden;
 }
 
+TLMessageReplyHeader::TLMessageReplyHeader(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    msgId(var["reply_to_msg_id"].toInt()),
+    peerId(var["reply_to_peer_id"].toMap()),
+    topId(var["reply_to_top_id"].toInt())
+{
+
+}
+
+QVariantMap TLMessageReplyHeader::serialize()
+{
+    TGOBJECT(obj, type);
+
+    obj["reply_to_msg_id"] = msgId;
+    if (peerId.type) obj["reply_to_peer_id"] = peerId.serialize();
+    obj["reply_to_top_id"] = topId;
+
+    return obj;
+}
+
 TLMessage::TLMessage(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id(var["id"].toInt()),
@@ -129,7 +168,8 @@ TLMessage::TLMessage(QVariantMap var) :
     from(var["from_id"].toMap()),
     message(var["message"].toString()),
     action(var["action"].toMap()),
-    media(var["media"].toMap())
+    media(var["media"].toMap()),
+    reply(var["reply_to"].toMap())
 {
 
 }
@@ -214,42 +254,44 @@ QVariantMap TLInputPeer::serialize()
         obj["channel_id"] = id;
         obj["msg_id"] = messageId;
         obj["peer"] = peer;
-        return obj;
+        break;
     }
     case TLType::InputPeerUserFromMessage:
     {
         obj["user_id"] = id;
         obj["msg_id"] = messageId;
         obj["peer"] = peer;
-        return obj;
+        break;
     }
     case TLType::InputPeerChannel:
     {
         obj["channel_id"] = id;
         obj["access_hash"] = accessHash;
-        return obj;
+        break;
     }
     case TLType::InputPeerUser:
     {
         obj["user_id"] = id;
         obj["access_hash"] = accessHash;
-        return obj;
+        break;
     }
     case TLType::InputPeerChat:
     {
         obj["chat_id"] = id;
-        return obj;
+        break;
     }
-    case TLType::InputPeerSelf:
-    {
-        return obj;
-    }
+//    case TLType::InputPeerSelf:
+//    {
+//        break;
+//    }
     default:
     {
         TGOBJECT(empty, TLType::InputPeerEmpty);
         return empty;
     }
     }
+
+    return obj;
 }
 
 TLUser::TLUser(QVariantMap var) :

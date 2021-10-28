@@ -61,6 +61,7 @@ struct TLPeer
     TLPeer(TLChat c);
     TLPeer(TLUser u);
     TLPeer(QVariantMap var = QVariantMap());
+    QVariantMap serialize();
 };
 
 struct TLDialog
@@ -101,9 +102,19 @@ struct TLInputFileLocation
     QVariantMap serialize();
 };
 
+struct TLMessageReplyHeader
+{
+    TLType::Types type;
+    qint32 msgId;
+    TLPeer peerId;
+    qint32 topId;
+
+    TLMessageReplyHeader(QVariantMap var = QVariantMap());
+    QVariantMap serialize();
+};
+
 struct TLMessage
 {
-    //TODO
     TLType::Types type;
     qint32 id;
     qint32 date;
@@ -112,14 +123,16 @@ struct TLMessage
     QVariantMap action;
     QVariantMap media;
     TLPeer from;
+    TLMessageReplyHeader reply;
 
     TLMessage(QVariantMap var = QVariantMap());
 };
 
-Q_DECLARE_METATYPE (TLMessage)
-Q_DECLARE_METATYPE (TLChat)
-Q_DECLARE_METATYPE (TLUser)
-Q_DECLARE_METATYPE (TLDialog)
-Q_DECLARE_METATYPE (TLPeer)
+Q_DECLARE_METATYPE(TLMessageReplyHeader)
+Q_DECLARE_METATYPE(TLMessage)
+Q_DECLARE_METATYPE(TLChat)
+Q_DECLARE_METATYPE(TLUser)
+Q_DECLARE_METATYPE(TLDialog)
+Q_DECLARE_METATYPE(TLPeer)
 
 #endif // TLMESSAGES_H
