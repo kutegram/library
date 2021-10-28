@@ -307,6 +307,34 @@ TLUser::TLUser(QVariantMap var) :
 
 }
 
+TLInputMessage::TLInputMessage(QVariantMap var) :
+    type((TLType::Types) GETID(var)),
+    id(var["id"].toInt()),
+    queryId(var["query_id"].toLongLong())
+{
+
+}
+
+QVariantMap TLInputMessage::serialize()
+{
+    TGOBJECT(obj, type);
+
+    switch (type) {
+    case TLType::InputMessageID:
+    case TLType::InputMessageReplyTo:
+        obj["id"] = id;
+        break;
+    case TLType::InputMessageCallbackQuery:
+        obj["id"] = id;
+        obj["query_id"] = queryId;
+        break;
+//    case TLType::InputMessagePinned:
+//        break;
+    }
+
+    return obj;
+}
+
 qint64 TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TLInputPeer offsetPeer, qint32 limit)
 {
     TGOBJECT(getDialogs, TLType::MessagesGetDialogsMethod);
@@ -452,4 +480,15 @@ qint64 TelegramClient::sendMessage(TLInputPeer peer, QString message)
     sendMessage["random_id"] = qFromLittleEndian<qint64>((const uchar*) randomBytes(sizeof(qint64)).constData());
 
     return sendMTObject< &writeTLMethodMessagesSendMessage >(sendMessage);
+}
+
+qint64 TelegramClient::getMessages(QList<TLInputMessage> ids)
+{
+    TGOBJECT(getMessages, TLType::MessagesGetMessagesMethod);
+
+    QVariantList idList;
+    for (qint32 i = 0; i < ids.size(); ++i) idList << ids[i].serialize();
+    getMessages["id"] = idList;
+
+    return sendMTObject< &writeTLMethodMessagesGetMessages >(getMessages);
 }

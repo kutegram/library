@@ -120,6 +120,7 @@ public:
     qint64 getHistory(TLInputPeer peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
     qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
     qint64 sendMessage(TLInputPeer peer, QString message); //TODO handle result: Updates
+    qint64 getMessages(QList<TLInputMessage> ids);
 
     void reconnectToDC(qint32 dcId);
 signals:

@@ -128,6 +128,17 @@ struct TLMessage
     TLMessage(QVariantMap var = QVariantMap());
 };
 
+struct TLInputMessage
+{
+    TLType::Types type;
+    qint32 id;
+    qint64 queryId;
+
+    TLInputMessage(QVariantMap var = QVariantMap());
+    QVariantMap serialize();
+};
+
+Q_DECLARE_METATYPE(TLInputMessage)
 Q_DECLARE_METATYPE(TLMessageReplyHeader)
 Q_DECLARE_METATYPE(TLMessage)
 Q_DECLARE_METATYPE(TLChat)
