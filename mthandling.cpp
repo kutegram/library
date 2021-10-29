@@ -34,6 +34,8 @@ void TelegramClient::handleRpcResult(QByteArray data, qint64 mtm)
 
     data.remove(0, 12);
     handleMessage(data, var.toLongLong());
+
+    messages.remove(mtm);
 }
 
 void TelegramClient::handleGzipPacked(QByteArray data, qint64 mtm)
@@ -114,7 +116,6 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     readMTRpcError(packet, var);
     TelegramObject rpcError = var.toMap();
 
-
 #ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got RPC error:" << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 #endif
@@ -148,6 +149,8 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     //PHONE_CODE_INVALID
     //SESSION_PASSWORD_NEEDED
     //FLOOD_WAIT_
+
+    messages.remove(mtm);
 }
 
 void TelegramClient::handleConfig(QByteArray data, qint64 mtm)

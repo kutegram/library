@@ -37,6 +37,7 @@ class TelegramClient : public QObject
 {
     Q_OBJECT
 private:
+    //TODO support all MTProto service-messages.
     //TODO move users, chats, messages, MTProto message, confirm to session
     TelegramSession session;
     QTcpSocket socket;
@@ -50,7 +51,7 @@ private:
     QByteArray serverNonce;
     qint64 retryId;
 
-    QMap<qint64, QByteArray> messages; //TODO remove message after getting response
+    QMap<qint64, QByteArray> messages;
     QList<qint64> confirm;
 
     TelegramObject dcConfig;
