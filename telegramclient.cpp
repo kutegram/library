@@ -832,9 +832,9 @@ void TelegramClient::initConnection()
     initRequest["device_model"] = osName() + "-based Device";
     initRequest["system_version"] = osName();
     initRequest["app_version"] = QApplication::applicationVersion();
-    initRequest["system_lang_code"] = "en"; //TODO
+    initRequest["system_lang_code"] = QLocale::system().name().split("_")[0];
     initRequest["lang_pack"] = "";
-    initRequest["lang_code"] = "en"; //TODO
+    initRequest["lang_code"] = QLocale::system().name().split("_")[0];
     initRequest["query"] = getDCC;
 
     TGOBJECT(invoke, TLType::InvokeWithLayerMethod);
