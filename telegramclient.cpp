@@ -101,6 +101,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 
 void TelegramClient::changeState(State s)
 {
+    if (s == state) return;
     state = s;
 
     switch (s) {
