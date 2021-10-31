@@ -99,6 +99,11 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 #endif
 }
 
+QByteArray TelegramClient::message(qint64 mtm)
+{
+    return messages[mtm];
+}
+
 void TelegramClient::changeState(State s)
 {
     if (s == state) return;

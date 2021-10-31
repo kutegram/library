@@ -147,6 +147,7 @@ public slots:
     void stop();
     void sync();
     void reset();
+    QByteArray message(qint64 mtm);
 
 private slots:
     void socket_connected();
