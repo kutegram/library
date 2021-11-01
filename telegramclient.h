@@ -51,6 +51,7 @@ private:
     QByteArray serverNonce;
     qint64 retryId;
 
+    QMap<qint64, qint32> messagesConIds;
     QMap<qint64, QByteArray> messages;
     QList<qint64> confirm;
 
@@ -148,6 +149,7 @@ public slots:
     void sync();
     void reset();
     QByteArray message(qint64 mtm);
+    qint32 messageConstructor(qint64 mtm);
 
 private slots:
     void socket_connected();

@@ -36,6 +36,7 @@ void TelegramClient::handleRpcResult(QByteArray data, qint64 mtm)
     handleMessage(data, var.toLongLong());
 
     messages.remove(mtm);
+    messagesConIds.remove(mtm);
 }
 
 void TelegramClient::handleGzipPacked(QByteArray data, qint64 mtm)
@@ -151,6 +152,7 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     //FLOOD_WAIT_
 
     messages.remove(mtm);
+    messagesConIds.remove(mtm);
 }
 
 void TelegramClient::handleConfig(QByteArray data, qint64 mtm)

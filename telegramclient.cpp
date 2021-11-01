@@ -61,6 +61,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     socket(this),
     newNonce(),
     nonce(),
+    messagesConIds(),
     messages(),
     confirm(),
     state(STOPPED),
@@ -102,6 +103,11 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 QByteArray TelegramClient::message(qint64 mtm)
 {
     return messages[mtm];
+}
+
+qint32 TelegramClient::messageConstructor(qint64 mtm)
+{
+    return messagesConIds[mtm];
 }
 
 void TelegramClient::changeState(State s)
@@ -177,6 +183,8 @@ void TelegramClient::stop()
 
     socket.abort();
     changeState(STOPPED);
+    messages.clear();
+    messagesConIds.clear();
     sync();
 }
 
@@ -792,10 +800,12 @@ qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm, bool bin
     qDebug() << "Sending MTProto object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
 #endif
 
+    qint32 packetConId = qFromLittleEndian<qint32>((const uchar*) raw.mid(0, 4).constData());
     if (!binary && raw.size() > 255) raw = gzipPacket(raw);
 
     qint64 messageId = getNewMessageId();
     messages.insert(messageId, raw);
+    messages.insert(messageId, packetConId);
 
     TelegramPacket packet;
     writeUInt64(packet, session.salt);
