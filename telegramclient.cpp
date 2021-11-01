@@ -805,7 +805,7 @@ qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm, bool bin
 
     qint64 messageId = getNewMessageId();
     messages.insert(messageId, raw);
-    messages.insert(messageId, packetConId);
+    messagesConIds.insert(messageId, packetConId);
 
     TelegramPacket packet;
     writeUInt64(packet, session.salt);
