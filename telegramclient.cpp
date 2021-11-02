@@ -63,6 +63,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     nonce(),
     messagesConIds(),
     messages(),
+    resendRequired(),
     confirm(),
     state(STOPPED),
     retryId(),
@@ -116,6 +117,16 @@ void TelegramClient::changeState(State s)
     state = s;
 
     switch (s) {
+    case INITED:
+    {
+        //TODO: think about packet spam!
+        QList<QByteArray> clone(resendRequired);
+        resendRequired.clear();
+        for (qint32 i = 0; i < clone.size(); ++i) {
+            sendMTPacket(clone[i]);
+        }
+        break;
+    }
     case AUTHORIZED:
     {
         initConnection();
@@ -188,29 +199,8 @@ void TelegramClient::stop()
     sync();
 }
 
-void TelegramClient::reconnectToDC(qint32 dcId)
+void TelegramClient::finishDCMigration()
 {
-    TGOBJECT(exp, TLType::AuthExportAuthorizationMethod);
-    exp["dc_id"] = session.migrateDc = dcId;
-    sync();
-
-    sendMTObject<&writeTLMethodAuthExportAuthorization>(exp);
-}
-
-void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
-{
-    if (!session.migrateDc) return;
-    TelegramPacket packet(data);
-    QVariant var;
-
-    readTLAuthExportedAuthorization(packet, var);
-    TelegramObject obj = var.toMap();
-
-    session.importId = obj["id"].toInt();
-    session.importBytes = obj["bytes"].toByteArray();
-
-    stop();
-
     TelegramVector options = dcConfig["dc_options"].toList();
     QString newIp;
     qint32 newPort;
@@ -237,6 +227,40 @@ void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
 #endif
 
     start();
+}
+
+void TelegramClient::reconnectToDC(qint32 dcId)
+{
+    session.migrateDc = dcId;
+    sync();
+
+    if (!isLoggedIn()) {
+        stop();
+        finishDCMigration();
+        return;
+    }
+
+    TGOBJECT(exp, TLType::AuthExportAuthorizationMethod);
+    exp["dc_id"] = dcId;
+
+    sendMTObject<&writeTLMethodAuthExportAuthorization>(exp);
+}
+
+void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
+{
+    if (!session.migrateDc) return;
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLAuthExportedAuthorization(packet, var);
+    TelegramObject obj = var.toMap();
+
+    session.importId = obj["id"].toInt();
+    session.importBytes = obj["bytes"].toByteArray();
+
+    stop();
+
+    finishDCMigration();
 }
 
 void TelegramClient::socket_connected()

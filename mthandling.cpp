@@ -19,7 +19,10 @@ void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
 #endif
 
     session.salt = badServerSalt["new_server_salt"].toULongLong();
+
     sendMTPacket(messages[badServerSalt["bad_msg_id"].toLongLong()]);
+    messages.remove(badServerSalt["bad_msg_id"].toLongLong());
+    messagesConIds.remove(badServerSalt["bad_msg_id"].toLongLong());
 
     emit gotMessageError(mtm, badServerSalt["error_code"].toInt());
 }
@@ -121,25 +124,30 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     qDebug() << "Got RPC error:" << QString::number(messagesConIds[mtm]) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 #endif
 
-    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString());
-
     QString errorMsg = rpcError["error_message"].toString();
+
+    bool handled =
+            errorMsg.startsWith("PHONE_MIGRATE_")
+            || errorMsg.startsWith("FILE_MIGRATE_")
+            || errorMsg.startsWith("USER_MIGRATE_")
+            || errorMsg.startsWith("NETWORK_MIGRATE_");
+    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString(), handled);
 
     if (errorMsg.startsWith("PHONE_MIGRATE_")) {
         reconnectToDC(errorMsg.split("PHONE_MIGRATE_").last().toInt());
-        //TODO resend request
+        resendRequired.append(messages[mtm]);
     }
     else if (errorMsg.startsWith("FILE_MIGRATE_")) {
         reconnectToDC(errorMsg.split("FILE_MIGRATE_").last().toInt());
-        //TODO resend request
+        resendRequired.append(messages[mtm]);
     }
     else if (errorMsg.startsWith("USER_MIGRATE_")) {
         reconnectToDC(errorMsg.split("USER_MIGRATE_").last().toInt());
-        //TODO resend request
+        resendRequired.append(messages[mtm]);
     }
     else if (errorMsg.startsWith("NETWORK_MIGRATE_")) {
         reconnectToDC(errorMsg.split("NETWORK_MIGRATE_").last().toInt());
-        //TODO resend request
+        resendRequired.append(messages[mtm]);
     }
     else if (errorMsg == "AUTH_KEY_UNREGISTERED") {
         //TODO reauth

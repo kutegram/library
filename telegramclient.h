@@ -53,6 +53,7 @@ private:
 
     QMap<qint64, qint32> messagesConIds;
     QMap<qint64, QByteArray> messages;
+    QList<QByteArray> resendRequired;
     QList<qint64> confirm;
 
     TelegramObject dcConfig;
@@ -133,7 +134,7 @@ signals:
     void gotMTError(qint32 error_code);
     void gotDHError(bool fail);
     void gotMessageError(qint64 mtm, qint32 error_code);
-    void gotRPCError(qint64 mtm, qint32 error_code, QString error_message);
+    void gotRPCError(qint64 mtm, qint32 error_code, QString error_message, bool handled);
 
     void gotLoginToken(qint64 mtm, qint32 expires, QString tokenUrl);
     void gotSentCode(qint64 mtm, QString phone_code_hash); //TODO timeout and more params
@@ -158,6 +159,7 @@ private slots:
     void socket_bytesWritten(qint64 count);
     void socket_error(QAbstractSocket::SocketError error);
     void networkSession_opened();
+    void finishDCMigration();
 };
 
 template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm, bool binary)
