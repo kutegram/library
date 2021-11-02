@@ -119,6 +119,7 @@ void TelegramClient::changeState(State s)
     switch (s) {
     case INITED:
     {
+        //TODO: what about packets that require to be logged in? This is only legal for auth methods.
         //TODO: think about packet spam!
         QList<QByteArray> clone(resendRequired);
         resendRequired.clear();
@@ -219,6 +220,8 @@ void TelegramClient::finishDCMigration()
     session.currentPort = newPort;
     session.currentIp = newIp;
     session.authKey = AuthKey();
+    session.migrateDc = 0;
+    session.userId = 0;
 
     sync();
 

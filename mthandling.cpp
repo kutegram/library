@@ -179,7 +179,7 @@ void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
 
     changeState(INITED);
 
-    if (session.migrateDc) {
+    if (session.importId && !session.importBytes.isEmpty()) {
         TGOBJECT(imp, TLType::AuthImportAuthorizationMethod);
         imp["id"] = session.importId;
         imp["bytes"] = session.importBytes;
