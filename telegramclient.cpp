@@ -778,16 +778,22 @@ qint32 TelegramClient::generateSequence(bool confirmed)
 void TelegramClient::sendMsgsAck()
 {
     if (!apiReady()) return;
-    //TODO: add timer send timeout
+    //TODO: add timer send timeout, spam protection
     while (!confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);
 
+#ifndef QT_NO_DEBUG_OUTPUT
+        qDebug() << "MSGACK SENT:";
+#endif
         TelegramVector msgIds;
-        qint32 count = qMin(confirm.size(), 8192);
-        for (qint32 i = 0; i < count; ++i) {
-            msgIds << confirm[i];
+        QList<qint64> forAck = confirm.mid(0, 8192);
+        for (qint32 i = 0; i < forAck.size(); ++i) {
+            msgIds << forAck[i];
+#ifndef QT_NO_DEBUG_OUTPUT
+            qDebug() << forAck[i];
+#endif
+            confirm.removeOne(forAck[i]);
         }
-        confirm.erase(confirm.begin(), confirm.begin() + count); //TODO: remove only on msgsAck recieved
 
         msgsAck["msg_ids"] = msgIds;
         sendMTObject<&writeMTMsgsAck>(msgsAck, true);
