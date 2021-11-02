@@ -734,6 +734,8 @@ QString osName()
 {
 #if defined(Q_OS_ANDROID)
     return QString("Android");
+#elif defined(Q_OS_SYMBIAN)
+    return QString("Symbian");
 #elif defined(Q_OS_BLACKBERRY)
     return QString("Blackberry OS");
 #elif defined(Q_OS_IOS)
@@ -748,8 +750,6 @@ QString osName()
     return QString("Linux");
 #elif defined(Q_OS_UNIX)
     return QString("Unix");
-#elif defined(Q_OS_SYMBIAN)
-    return QString("Symbian");
 #else
     return QString("Unknown");
 #endif
