@@ -408,7 +408,7 @@ void TelegramClient::sendPlainPacket(QByteArray raw)
     TelegramPacket packet;
 
     writeInt64(packet, 0);
-    writeInt64(packet, ((QDateTime::currentDateTime().toUTC().toTime_t()) << 32));
+    writeInt64(packet, (((quint64) (QDateTime::currentDateTime().toUTC().toTime_t())) << 32));
     writeInt32(packet, raw.length());
     packet.writeRawBytes(raw);
 
