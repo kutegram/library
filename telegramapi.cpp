@@ -11,6 +11,11 @@ qint64 TelegramClient::exportLoginToken()
     return sendMTObject<&writeTLMethodAuthExportLoginToken>(exportToken);
 }
 
+void TelegramClient::handleUpdateLoginToken(QByteArray data, qint64 mtm)
+{
+    exportLoginToken();
+}
+
 void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
@@ -20,6 +25,32 @@ void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)
     TelegramObject loginToken = var.toMap();
 
     emit gotLoginToken(mtm, loginToken["expires"].toInt(), "tg://login?token=" + QString::fromAscii(loginToken["token"].toByteArray().toBase64()).replace("+", "-").replace("/", "_"));
+}
+
+void TelegramClient::handleLoginTokenSuccess(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLAuthLoginToken(packet, var);
+    TelegramObject loginToken = var.toMap();
+
+    TelegramPacket authPacket;
+    writeTLAuthAuthorization(authPacket, loginToken["authorization"].toMap());
+
+    handleAuthorization(authPacket.toByteArray(), mtm);
+}
+
+void TelegramClient::handleLoginTokenMigrateTo(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLAuthLoginToken(packet, var);
+    TelegramObject loginToken = var.toMap();
+
+    //reconnectToDC(loginToken["dc_id"].toInt());
+    //auth.importLoginToken
 }
 
 qint64 TelegramClient::sendCode(QString phone_number)

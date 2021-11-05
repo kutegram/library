@@ -95,6 +95,8 @@ public:
     void handleDhGenRetry(QByteArray data, qint64 mtm);
     void handleDhGenFail(QByteArray data, qint64 mtm);
     void handleLoginToken(QByteArray data, qint64 mtm);
+    void handleLoginTokenSuccess(QByteArray data, qint64 mtm);
+    void handleLoginTokenMigrateTo(QByteArray data, qint64 mtm);
     void handleSentCode(QByteArray data, qint64 mtm);
     void handleAuthorization(QByteArray data, qint64 mtm);
     void handleDialogs(QByteArray data, qint64 mtm);
@@ -104,6 +106,8 @@ public:
     void handleMessages(QByteArray data, qint64 mtm);
     void handleMessagesSlice(QByteArray data, qint64 mtm);
     void handleChannelMessages(QByteArray data, qint64 mtm);
+
+    void handleUpdateLoginToken(QByteArray data, qint64 mtm);
 
     void initConnection();
 

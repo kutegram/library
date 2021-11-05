@@ -42,6 +42,8 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::AuthSentCode] = &TelegramClient::handleSentCode;
     map[TLType::AuthAuthorization] = &TelegramClient::handleAuthorization;
     map[TLType::AuthLoginToken] = &TelegramClient::handleLoginToken;
+    map[TLType::AuthLoginTokenMigrateTo] = &TelegramClient::handleLoginTokenMigrateTo;
+    map[TLType::AuthLoginTokenSuccess] = &TelegramClient::handleLoginTokenSuccess;
     map[TLType::MessagesDialogs] = &TelegramClient::handleDialogs;
     map[TLType::MessagesDialogsSlice] = &TelegramClient::handleDialogsSlice;
     map[TLType::UploadFile] = &TelegramClient::handleFile;
@@ -49,6 +51,8 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::MessagesMessages] = &TelegramClient::handleMessages;
     map[TLType::MessagesMessagesSlice] = &TelegramClient::handleMessagesSlice;
     map[TLType::MessagesChannelMessages] = &TelegramClient::handleChannelMessages;
+
+    map[TLType::UpdateLoginToken] = &TelegramClient::handleUpdateLoginToken;
 
     return map;
 }
