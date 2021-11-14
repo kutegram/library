@@ -53,6 +53,8 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::MessagesChannelMessages] = &TelegramClient::handleChannelMessages;
 
     map[TLType::UpdateLoginToken] = &TelegramClient::handleUpdateLoginToken;
+    map[TLType::UpdateNewMessage] = &TelegramClient::handleUpdateNewMessage;
+    map[TLType::UpdateNewChannelMessage] = &TelegramClient::handleUpdateNewChannelMessage;
 
     return map;
 }

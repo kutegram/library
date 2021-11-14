@@ -1,5 +1,4 @@
 #include "telegramclient.h"
-
 #include "tlschema.h"
 
 qint64 TelegramClient::exportLoginToken()
@@ -9,11 +8,6 @@ qint64 TelegramClient::exportLoginToken()
     exportToken["api_hash"] = APP_HASH;
 
     return sendMTObject<&writeTLMethodAuthExportLoginToken>(exportToken);
-}
-
-void TelegramClient::handleUpdateLoginToken(QByteArray data, qint64 mtm)
-{
-    exportLoginToken();
 }
 
 void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)

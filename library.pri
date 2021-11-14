@@ -26,4 +26,5 @@ SOURCES += \
     $$PWD/mthandling.cpp \
     $$PWD/telegramapi.cpp \
     $$PWD/tlmessages.cpp \
-    $$PWD/tlfiles.cpp
+    $$PWD/tlfiles.cpp \
+    library/updates.cpp

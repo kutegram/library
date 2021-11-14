@@ -108,6 +108,8 @@ public:
     void handleChannelMessages(QByteArray data, qint64 mtm);
 
     void handleUpdateLoginToken(QByteArray data, qint64 mtm);
+    void handleUpdateNewMessage(QByteArray data, qint64 mtm);
+    void handleUpdateNewChannelMessage(QByteArray data, qint64 mtm);
 
     void initConnection();
 
@@ -147,6 +149,8 @@ signals:
     void gotDialogs(qint64 mtm, qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
     void gotMessages(qint64 mtm, qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
     void gotFilePart(qint64 mtm, TLType::Types type, qint32 mtime, QByteArray bytes);
+
+    void gotNewMessage(qint64 mtm, TLMessage msg);
     //TODO void gotFullFile(qint64 mtm, TLType::Types type, qint32 mtime, QByteArray bytes);
 public slots:
     void start();
