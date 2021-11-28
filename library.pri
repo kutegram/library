@@ -27,4 +27,6 @@ SOURCES += \
     $$PWD/telegramapi.cpp \
     $$PWD/tlmessages.cpp \
     $$PWD/tlfiles.cpp \
-    library/updates.cpp
+    $$PWD/updates.cpp
+
+INCLUDEPATH += $$PWD
