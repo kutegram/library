@@ -1,7 +1,8 @@
 QT += network
 
+INCLUDEPATH += C:/OpenSSL-Win32/include
+
 include(qt-json/qt-json.pri)
-include(cryptopp/cryptopp.pri)
 include(thirdparty/thirdparty.pri)
 
 HEADERS += \

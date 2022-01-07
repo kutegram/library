@@ -14,9 +14,6 @@
 #if QT_VERSION >= 0x040702
 #include <QNetworkConfigurationManager>
 #endif
-#include "cryptopp/gzip.h"
-
-using namespace CryptoPP;
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 

@@ -1,9 +1,6 @@
 [submodule "qt-json"]
 	path = qt-json
 	url = https://github.com/kutegram/qt-json.git
-[submodule "cryptopp"]
-	path = cryptopp
-	url = https://github.com/kutegram/cryptopp.git
 [submodule "thirdparty"]
 	path = thirdparty
 	url = https://github.com/kutegram/thirdparty.git

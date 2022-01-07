@@ -10,6 +10,8 @@
 #include <QCryptographicHash>
 #include "mtschema.h"
 #include <QtCore>
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
 DHKey::DHKey(QString publicKey, qint64 fingerprint, QString exponent) :
     publicKey(QByteArray::fromHex(publicKey.toAscii())),
@@ -164,12 +166,26 @@ QByteArray encryptAES256IGE(QByteArray data, QByteArray iv, QByteArray key)
 
 QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp)
 {
-    Integer message = toBig(data);
-    Integer n = toBig(key);
-    Integer e = toBig(exp);
-    RSA::PublicKey publicKey;
-    publicKey.Initialize(n, e);
-    return fromBig(publicKey.ApplyFunction(message));
+    BIGNUM* x = BN_new(), n = BN_new(), e = BN_new(), r = BN_new();
+    BN_CTX* ctx = BN_CTX_new();
+
+    BN_bin2bn((const unsigned char*) data.constData(), data.length(), x);
+    BN_bin2bn((const unsigned char*) key.constData(), key.length(), n);
+    BN_bin2bn((const unsigned char*) exp.constData(), exp.length(), e);
+    int result = BN_mod_exp(r, x, e, n, ctx);
+
+    QByteArray resultArray(BN_num_bytes(r), 0);
+    if (result) {
+        BN_bn2bin(r, resultArray.data());
+    } else resultArray.clear();
+
+    BN_free(x);
+    BN_free(n);
+    BN_free(e);
+    BN_free(r);
+    BN_CTX_free(ctx);
+
+    return resultArray;
 }
 
 QByteArray hashSHA256(QByteArray dataToHash)
