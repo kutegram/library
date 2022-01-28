@@ -31,3 +31,6 @@ SOURCES += \
     $$PWD/updates.cpp
 
 INCLUDEPATH += $$PWD
+
+win32:LIBS += -LC:/OpenSSL-Win32/lib -llibcrypto
+win32:INCLUDEPATH += C:/OpenSSL-Win32/include
