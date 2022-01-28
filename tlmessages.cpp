@@ -6,10 +6,6 @@
 #include "crypto.h"
 #include <QtCore>
 
-#ifndef QT_NO_DEBUG_OUTPUT
-#include <QtDebug>
-#endif
-
 TLPeer::TLPeer(QVariantMap var) :
     type((TLType::Types) GETID(var)),
     id()
