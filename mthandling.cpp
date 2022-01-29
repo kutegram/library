@@ -3,6 +3,7 @@
 #include "mtschema.h"
 #include "cryptopp/gzip.h"
 #include <QStringList>
+#include <QDebug>
 
 using namespace CryptoPP;
 

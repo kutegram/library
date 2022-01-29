@@ -11,6 +11,7 @@
 #include <QNetworkConfigurationManager>
 #endif
 #include "cryptopp/gzip.h"
+#include <QDebug>
 
 using namespace CryptoPP;
 
