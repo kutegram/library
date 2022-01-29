@@ -117,13 +117,7 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
 
     QString errorMsg = rpcError["error_message"].toString();
 
-    bool handled =
-            errorMsg.startsWith("PHONE_MIGRATE_")
-            || errorMsg.startsWith("FILE_MIGRATE_")
-            || errorMsg.startsWith("USER_MIGRATE_")
-            || errorMsg.startsWith("NETWORK_MIGRATE_")
-            || errorMsg.startsWith("INPUT_METHOD_INVALID_"); //TODO: remove this hack. Fix msgsAck.
-    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString(), handled);
+    bool handled = true;
 
     if (errorMsg.startsWith("PHONE_MIGRATE_")) {
         reconnectToDC(errorMsg.split("PHONE_MIGRATE_").last().toInt());
@@ -144,10 +138,11 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
     else if (errorMsg.startsWith("INPUT_METHOD_INVALID_")) {
         qDebug() << "INPUT_METHOD_INVALID_";
     }
-    else if (errorMsg == "AUTH_KEY_UNREGISTERED") {
-        //TODO reauth
+    else if (errorMsg == "AUTH_KEY_UNREGISTERED" || errorMsg == "SESSION_REVOKED") {
         reset();
     }
+
+    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString(), handled);
 
     //TODO handle errors
     //PHONE_CODE_INVALID
