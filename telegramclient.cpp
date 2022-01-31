@@ -3,7 +3,7 @@
 #include <QDateTime>
 #include "mtschema.h"
 #include "crypto.h"
-#include <QMap>
+#include <QHash>
 #include <QtCore>
 #include "tlschema.h"
 #include <QApplication>
@@ -17,9 +17,9 @@ using namespace CryptoPP;
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
-QMap<qint32, HANDLE_METHOD> getHandleMap()
+QHash<qint32, HANDLE_METHOD> getHandleMap()
 {
-    QMap<qint32, HANDLE_METHOD> map;
+    QHash<qint32, HANDLE_METHOD> map;
 
     map[MTType::ResPQ] = &TelegramClient::handleResPQ;
     map[MTType::ServerDHParamsOk] = &TelegramClient::handleServerDHParamsOk;
@@ -34,6 +34,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::NewSessionCreated] = &TelegramClient::handleNewSessionCreated;
     map[MTType::RpcError] = &TelegramClient::handleRpcError;
     map[MTType::MsgCopy] = &TelegramClient::handleMsgCopy;
+    map[MTType::Pong] = &TelegramClient::handlePong;
 
     map[TLType::Config] = &TelegramClient::handleConfig;
     map[TLType::AuthSentCode] = &TelegramClient::handleSentCode;
@@ -48,15 +49,19 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::MessagesMessages] = &TelegramClient::handleMessages;
     map[TLType::MessagesMessagesSlice] = &TelegramClient::handleMessagesSlice;
     map[TLType::MessagesChannelMessages] = &TelegramClient::handleChannelMessages;
-
-    map[TLType::UpdateLoginToken] = &TelegramClient::handleUpdateLoginToken;
-    map[TLType::UpdateNewMessage] = &TelegramClient::handleUpdateNewMessage;
-    map[TLType::UpdateNewChannelMessage] = &TelegramClient::handleUpdateNewChannelMessage;
+    map[TLType::UpdatesState] = &TelegramClient::handleUpdatesState;
+    map[TLType::UpdatesTooLong] = &TelegramClient::handleUpdatesTooLong;
+    map[TLType::UpdateShortMessage] = &TelegramClient::handleUpdateShortMessage;
+    map[TLType::UpdateShortChatMessage] = &TelegramClient::handleUpdateShortChatMessage;
+    map[TLType::UpdateShort] = &TelegramClient::handleUpdateShort;
+    map[TLType::UpdatesCombined] = &TelegramClient::handleUpdatesCombined;
+    map[TLType::Updates] = &TelegramClient::handleUpdates;
+    map[TLType::UpdateShortSentMessage] = &TelegramClient::handleUpdateShortSentMessage;
 
     return map;
 }
 
-QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
+QHash<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 
 TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     QObject(parent),
@@ -76,7 +81,12 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 #if QT_VERSION >= 0x040702
     networkSession(0),
 #endif
-    dcConfig()
+    dcConfig(),
+    updateDate(),
+    updateSeq(),
+    updatePts(),
+    updateQts(),
+    timer(this)
 {
     session.deserialize(sessionFile.value("session").toMap());
 
@@ -88,6 +98,11 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     connect(&socket, SIGNAL(readyRead()), this, SLOT(socket_readyRead()));
     connect(&socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
     connect(&socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
+
+    timer.setSingleShot(false);
+    timer.setInterval(60000);
+
+    connect(&timer, SIGNAL(timeout()), this, SLOT(timer_timeout()));
 
 #if QT_VERSION >= 0x040702
     QNetworkConfigurationManager manager;
@@ -104,6 +119,15 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 #endif
 }
 
+void TelegramClient::timer_timeout()
+{
+    if (isOpened() && isAuthorized()) {
+        pingDelayDisconnect(0, timer.interval() * 5 / 4);
+    } else {
+        timer.stop();
+    }
+}
+
 QByteArray TelegramClient::message(qint64 mtm)
 {
     return messages[mtm];
@@ -118,6 +142,12 @@ void TelegramClient::changeState(State s)
 {
     if (s == state) return;
     state = s;
+
+    if (s >= AUTHORIZED) {
+        timer.start(60000);
+    } else {
+        timer.stop();
+    }
 
     switch (s) {
     case INITED:
@@ -449,9 +479,9 @@ void TelegramClient::handleMessage(QByteArray messageData, qint64 mtm)
 
     HANDLE_METHOD method = HANDLE_METHODS.value(conId, (HANDLE_METHOD) 0);
     if (!method) {
-        qDebug() << "Got an unknown TL object ( id" << conId << ")";
+        qDebug() << "[ERR] Got an unknown TL object ( id" << QString::number((quint32) conId, 16) << ")";
     } else {
-        qDebug() << "Got a known TL object ( id" << conId << ")";
+        qDebug() << "[GOT] ( id" << QString::number((quint32) conId, 16) << ")";
         (this->*method)(messageData, mtm);
     }
 
@@ -727,6 +757,7 @@ qint32 TelegramClient::generateSequence(bool confirmed)
     return result;
 }
 
+//TODO: Fix INPUT_METHOD_INVALID
 void TelegramClient::sendMsgsAck()
 {
     if (!apiReady()) return;

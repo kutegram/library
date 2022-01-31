@@ -7,6 +7,28 @@
 
 using namespace CryptoPP;
 
+qint64 TelegramClient::pingDelayDisconnect(qint64 ping_id, qint32 delay)
+{
+    qDebug() << "[PING] Sending ID:" << ping_id << "with delay:" << delay;
+
+    TGOBJECT(pingDD, MTType::PingDelayDisconnectMethod);
+    pingDD["ping_id"] = ping_id;
+    pingDD["disconnect_delay"] = delay;
+
+    return sendMTObject<&writeMTMethodPingDelayDisconnect>(pingDD);
+}
+
+void TelegramClient::handlePong(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readMTPong(packet, var);
+    TelegramObject obj = var.toMap();
+
+    qDebug() << "[PONG] Got ID:" << obj["ping_id"].toLongLong() << "from message ID:" << obj["msg_id"].toLongLong();
+}
+
 void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
 {
     TelegramPacket packet(data);
@@ -114,7 +136,7 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
 
     readMTRpcError(packet, var);
     TelegramObject rpcError = var.toMap();
-    qDebug() << "Got RPC error:" << QString::number(messagesConIds[mtm]) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
+    qDebug() << "Got RPC error:" << QString::number(messagesConIds[mtm], 16) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 
     QString errorMsg = rpcError["error_message"].toString();
 
