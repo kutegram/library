@@ -24,6 +24,7 @@ qint32 randomInt(qint32 lowerThan) {
 
 QByteArray randomBytes(qint32 size)
 {
+    //TODO: use OpenSSL's secure random
     QByteArray array;
 
     qsrand(QDateTime::currentDateTime().toUTC().toTime_t());
