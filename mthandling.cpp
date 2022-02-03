@@ -3,8 +3,31 @@
 #include "mtschema.h"
 #include "cryptopp/gzip.h"
 #include <QStringList>
+#include <QDebug>
 
 using namespace CryptoPP;
+
+qint64 TelegramClient::pingDelayDisconnect(qint64 ping_id, qint32 delay)
+{
+    qDebug() << "[PING] Sending ID:" << ping_id << "with delay:" << delay;
+
+    TGOBJECT(pingDD, MTType::PingDelayDisconnectMethod);
+    pingDD["ping_id"] = ping_id;
+    pingDD["disconnect_delay"] = delay;
+
+    return sendMTObject<&writeMTMethodPingDelayDisconnect>(pingDD);
+}
+
+void TelegramClient::handlePong(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readMTPong(packet, var);
+    TelegramObject obj = var.toMap();
+
+    qDebug() << "[PONG] Got ID:" << obj["ping_id"].toLongLong() << "from message ID:" << obj["msg_id"].toLongLong();
+}
 
 void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
 {
@@ -14,9 +37,7 @@ void TelegramClient::handleBadServerSalt(QByteArray data, qint64 mtm)
     readMTBadMsgNotification(packet, var);
     TelegramObject badServerSalt = var.toMap();
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a bad salt notification:" << badServerSalt["error_code"].toInt();
-#endif
 
     session.salt = badServerSalt["new_server_salt"].toULongLong();
 
@@ -88,9 +109,7 @@ void TelegramClient::handleBadMsgNotification(QByteArray data, qint64 mtm)
     readMTBadMsgNotification(packet, var);
     TelegramObject badMsgNotify = var.toMap();
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a bad msg notification:" << badMsgNotify["error_code"].toInt();
-#endif
 
     emit gotMessageError(mtm, badMsgNotify["error_code"].toInt());
 }
@@ -106,9 +125,7 @@ void TelegramClient::handleNewSessionCreated(QByteArray data, qint64 mtm)
     TelegramObject newSessionCreated = var.toMap();
     session.salt = newSessionCreated["server_salt"].toULongLong();
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "New session created.";
-#endif
     sync();
 }
 
@@ -119,20 +136,11 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
 
     readMTRpcError(packet, var);
     TelegramObject rpcError = var.toMap();
-
-#ifndef QT_NO_DEBUG_OUTPUT
-    qDebug() << "Got RPC error:" << QString::number(messagesConIds[mtm]) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
-#endif
+    qDebug() << "Got RPC error:" << QString::number(messagesConIds[mtm], 16) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 
     QString errorMsg = rpcError["error_message"].toString();
 
-    bool handled =
-            errorMsg.startsWith("PHONE_MIGRATE_")
-            || errorMsg.startsWith("FILE_MIGRATE_")
-            || errorMsg.startsWith("USER_MIGRATE_")
-            || errorMsg.startsWith("NETWORK_MIGRATE_")
-            || errorMsg.startsWith("INPUT_METHOD_INVALID_"); //TODO: remove this hack. Fix msgsAck.
-    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString(), handled);
+    bool handled = true;
 
     if (errorMsg.startsWith("PHONE_MIGRATE_")) {
         reconnectToDC(errorMsg.split("PHONE_MIGRATE_").last().toInt());
@@ -150,15 +158,14 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
         reconnectToDC(errorMsg.split("NETWORK_MIGRATE_").last().toInt());
         resendRequired.append(messages[mtm]);
     }
-#ifndef QT_NO_DEBUG_OUTPUT
     else if (errorMsg.startsWith("INPUT_METHOD_INVALID_")) {
         qDebug() << "INPUT_METHOD_INVALID_";
     }
-#endif
-    else if (errorMsg == "AUTH_KEY_UNREGISTERED") {
-        //TODO reauth
+    else if (errorMsg == "AUTH_KEY_UNREGISTERED" || errorMsg == "SESSION_REVOKED") {
         reset();
     }
+
+    emit gotRPCError(mtm, rpcError["error_code"].toInt(), rpcError["error_message"].toString(), handled);
 
     //TODO handle errors
     //PHONE_CODE_INVALID
@@ -190,9 +197,7 @@ void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
         changeState(LOGGED_IN);
     }
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Got a config. Connection inited.";
-#endif
 
     sync();
 }

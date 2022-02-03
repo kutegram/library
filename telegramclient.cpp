@@ -1,13 +1,9 @@
 #include "telegramclient.h"
 
-#ifndef QT_NO_DEBUG_OUTPUT
-#include <QtDebug>
-#endif
-
 #include <QDateTime>
 #include "mtschema.h"
 #include "crypto.h"
-#include <QMap>
+#include <QHash>
 #include <QtCore>
 #include "tlschema.h"
 #include <QApplication>
@@ -17,9 +13,9 @@
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
-QMap<qint32, HANDLE_METHOD> getHandleMap()
+QHash<qint32, HANDLE_METHOD> getHandleMap()
 {
-    QMap<qint32, HANDLE_METHOD> map;
+    QHash<qint32, HANDLE_METHOD> map;
 
     map[MTType::ResPQ] = &TelegramClient::handleResPQ;
     map[MTType::ServerDHParamsOk] = &TelegramClient::handleServerDHParamsOk;
@@ -34,6 +30,7 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[MTType::NewSessionCreated] = &TelegramClient::handleNewSessionCreated;
     map[MTType::RpcError] = &TelegramClient::handleRpcError;
     map[MTType::MsgCopy] = &TelegramClient::handleMsgCopy;
+    map[MTType::Pong] = &TelegramClient::handlePong;
 
     map[TLType::Config] = &TelegramClient::handleConfig;
     map[TLType::AuthSentCode] = &TelegramClient::handleSentCode;
@@ -48,15 +45,19 @@ QMap<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::MessagesMessages] = &TelegramClient::handleMessages;
     map[TLType::MessagesMessagesSlice] = &TelegramClient::handleMessagesSlice;
     map[TLType::MessagesChannelMessages] = &TelegramClient::handleChannelMessages;
-
-    map[TLType::UpdateLoginToken] = &TelegramClient::handleUpdateLoginToken;
-    map[TLType::UpdateNewMessage] = &TelegramClient::handleUpdateNewMessage;
-    map[TLType::UpdateNewChannelMessage] = &TelegramClient::handleUpdateNewChannelMessage;
+    map[TLType::UpdatesState] = &TelegramClient::handleUpdatesState;
+    map[TLType::UpdatesTooLong] = &TelegramClient::handleUpdatesTooLong;
+    map[TLType::UpdateShortMessage] = &TelegramClient::handleUpdateShortMessage;
+    map[TLType::UpdateShortChatMessage] = &TelegramClient::handleUpdateShortChatMessage;
+    map[TLType::UpdateShort] = &TelegramClient::handleUpdateShort;
+    map[TLType::UpdatesCombined] = &TelegramClient::handleUpdatesCombined;
+    map[TLType::Updates] = &TelegramClient::handleUpdates;
+    map[TLType::UpdateShortSentMessage] = &TelegramClient::handleUpdateShortSentMessage;
 
     return map;
 }
 
-QMap<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
+QHash<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 
 TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     QObject(parent),
@@ -76,7 +77,12 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 #if QT_VERSION >= 0x040702
     networkSession(0),
 #endif
-    dcConfig()
+    dcConfig(),
+    updateDate(),
+    updateSeq(),
+    updatePts(),
+    updateQts(),
+    timer(this)
 {
     session.deserialize(sessionFile.value("session").toMap());
 
@@ -88,6 +94,11 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     connect(&socket, SIGNAL(readyRead()), this, SLOT(socket_readyRead()));
     connect(&socket, SIGNAL(bytesWritten(qint64)), this, SLOT(socket_bytesWritten(qint64)));
     connect(&socket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socket_error(QAbstractSocket::SocketError)));
+
+    timer.setSingleShot(false);
+    timer.setInterval(60000);
+
+    connect(&timer, SIGNAL(timeout()), this, SLOT(timer_timeout()));
 
 #if QT_VERSION >= 0x040702
     QNetworkConfigurationManager manager;
@@ -104,6 +115,16 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 #endif
 }
 
+void TelegramClient::timer_timeout()
+{
+    if (isOpened() && isAuthorized()) {
+        pingDelayDisconnect(0, timer.interval() * 5 / 4);
+        sendMsgsAck();
+    } else {
+        timer.stop();
+    }
+}
+
 QByteArray TelegramClient::message(qint64 mtm)
 {
     return messages[mtm];
@@ -118,6 +139,12 @@ void TelegramClient::changeState(State s)
 {
     if (s == state) return;
     state = s;
+
+    if (s >= AUTHORIZED) {
+        timer.start(60000);
+    } else {
+        timer.stop();
+    }
 
     switch (s) {
     case INITED:
@@ -228,9 +255,7 @@ void TelegramClient::finishDCMigration()
 
     sync();
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Migrating to DC" << session.migrateDc;
-#endif
 
     start();
 }
@@ -273,9 +298,7 @@ void TelegramClient::socket_connected()
 {
     if (!isOpened()) return;
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket was connected to" << socket.peerName() << ":" << socket.peerPort();
-#endif
 
     //Init MTProto transport
     socket.putChar(0xef);
@@ -300,31 +323,23 @@ void TelegramClient::socket_connected()
 
 void TelegramClient::socket_disconnected()
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket was disconnected";
-#endif
 
     stop();
 }
 
 void TelegramClient::socket_readyRead()
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket is ready to read";
-#endif
 
     readMutex.lock();
 
     while (socket.bytesAvailable()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "Bytes are avaliable, trying to read";
-#endif
 
         //Read message
         QByteArray messageArray = readMessage();
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "Socket was" << messageArray.length() << "byte(s) readed";
-#endif
 
         TelegramPacket message(messageArray);
 
@@ -333,9 +348,7 @@ void TelegramClient::socket_readyRead()
         //If length of message is <= 4, it is an negative integer error.
         if (messageArray.length() <= 4) {
             readInt32(message, id);
-#ifndef QT_NO_DEBUG_OUTPUT
             qDebug() << "Got an message error:" << id.toInt();
-#endif
             emit gotMTError(id.toInt());
             return;
         }
@@ -346,17 +359,13 @@ void TelegramClient::socket_readyRead()
         qint64 mtMsgId;
 
         if (!id.toULongLong()) {
-#ifndef QT_NO_DEBUG_OUTPUT
             //qDebug() << "Got an plain message.";
-#endif
             //auth_key_id == 0: it is a plain message.
             readInt64(message, id); //message_id
             readInt32(message, id);
             message.readRawBytes(plainData, id.toInt());
         } else {
-#ifndef QT_NO_DEBUG_OUTPUT
             //qDebug() << "Got an MTProto message.";
-#endif
             if (state < AUTHORIZED) return;
             //auth_key_id != 0: it is a MTProto message.
             //TODO: Important checks
@@ -388,25 +397,19 @@ void TelegramClient::socket_readyRead()
 
 void TelegramClient::socket_bytesWritten(qint64 count)
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket was" << count << "byte(s) written";
-#endif
 }
 
 void TelegramClient::socket_error(QAbstractSocket::SocketError error)
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Socket has got an error:" << error;
-#endif
 
     emit gotSocketError(error);
 }
 
 void TelegramClient::sendPlainPacket(QByteArray raw)
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Sending plain object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
-#endif
 
     TelegramPacket packet;
 
@@ -448,9 +451,7 @@ QByteArray TelegramClient::readMessage()
 
     length *= 4;
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket.bytesAvailable() << "/" << length << ")";
-#endif
 
     QByteArray i;
     i.reserve(length);
@@ -475,13 +476,9 @@ void TelegramClient::handleMessage(QByteArray messageData, qint64 mtm)
 
     HANDLE_METHOD method = HANDLE_METHODS.value(conId, (HANDLE_METHOD) 0);
     if (!method) {
-#ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got an unknown TL object ( id" << conId << ")";
-#endif
+        qDebug() << "[ERR] Got an unknown TL object ( id" << QString::number((quint32) conId, 16) << ")";
     } else {
-#ifndef QT_NO_DEBUG_OUTPUT
-        qDebug() << "Got a known TL object ( id" << conId << ")";
-#endif
+        qDebug() << "[GOT] ( id" << QString::number((quint32) conId, 16) << ")";
         (this->*method)(messageData, mtm);
     }
 
@@ -499,9 +496,7 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
     TelegramObject resPQ = var.toMap();
 
     if (nonce != resPQ["nonce"].toByteArray()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: nonces are mismatched!";
-#endif
         return;
     }
 
@@ -514,9 +509,7 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
             << DHKey("c150023e2f70db7985ded064759cfecf0af328e69a41daf4d6f01b538135a6f91f8f8b2a0ec9ba9720ce352efcf6c5680ffc424bd634864902de0b4bd6d49f4e580230e3ae97d95c8b19442b3c0a10d8f5633fecedd6926a7f6dab0ddb7d457f9ea81b8465fcd6fffeed114011df91c059caedaf97625f6c96ecc74725556934ef781d866b34f011fce4d835a090196e9a5f0e4449af7eb697ddb9076494ca5f81104a305b6dd27665722c46b60e5df680fb16b210607ef217652e60236c255f6a28315f4083a96791d7214bf64c1df4fd0db1944fb26a2a57031b32eee64ad15a8ba68885cde74a5bfc920f6abf59ba5c75506373e7130f9042da922179251f", -4344800451088585951LL);
 
     TelegramVector fingerprints = resPQ["server_public_key_fingerprints"].toList();
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Fingerprints:" << fingerprints;
-#endif
 
     QList<DHKey> matched;
     for (qint32 i = 0; i < keychain.size(); ++i) {
@@ -529,9 +522,7 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
     }
 
     if (matched.isEmpty()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: none of fingerprints are matched!";
-#endif
         return;
     }
 
@@ -571,9 +562,7 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
 
     TelegramPacket pqInnerDataPacket;
     writeMTPQInnerDataCustom(pqInnerDataPacket, pqInnerData);
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "PQInnerData:" << pqInnerDataPacket.toByteArray().toHex();
-#endif
 
     QByteArray pqInnerArray = pqInnerDataPacket.toByteArray();
     //MTProto RSA-PAD encrypted / required by PQInnerDataDc
@@ -601,9 +590,7 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
     //Sending ReqDHParams
     TelegramPacket reqDHParamsPacket;
     writeMTMethodReqDHParams(reqDHParamsPacket, reqDHParams);
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "ReqDHParams:" << reqDHParamsPacket.toByteArray().toHex();
-#endif
     sendPlainPacket(reqDHParamsPacket.toByteArray());
 }
 
@@ -618,25 +605,19 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data, qint64 mtm)
     TelegramObject serverDHParams = var.toMap();
 
     if (nonce != serverDHParams["nonce"].toByteArray()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: nonces are mismatched!";
-#endif
         return;
     }
 
     if (serverNonce != serverDHParams["server_nonce"].toByteArray()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: server nonces are mismatched!";
-#endif
         return;
     }
 
     QByteArray answer = serverDHParams["encrypted_answer"].toByteArray();
 
     if (answer.size() & 15) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: bad padding for encrypted answer!";
-#endif
         return;
     }
 
@@ -702,24 +683,18 @@ void TelegramClient::handleDhGenOk(QByteArray data, qint64 mtm)
     TelegramObject dhGenOk = var.toMap();
 
     if (nonce != dhGenOk["nonce"].toByteArray()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: nonces are mismatched!";
-#endif
         return;
     }
 
     if (serverNonce != dhGenOk["server_nonce"].toByteArray()) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: server nonces are mismatched!";
-#endif
         return;
     }
 
     QByteArray newNonceHash1 = dhGenOk["new_nonce_hash1"].toByteArray();
     if (session.authKey.calcNewNonceHash(newNonce, 1) != newNonceHash1) {
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "SECURITY ERROR: new nonce hashes are mismatched!";
-#endif
         return;
     }
 
@@ -728,9 +703,7 @@ void TelegramClient::handleDhGenOk(QByteArray data, qint64 mtm)
 
     //Success.
     //TODO: handle dhgen errors, auth errors.
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Authorization succeeded.";
-#endif
 
     changeState(AUTHORIZED);
 }
@@ -781,6 +754,7 @@ qint32 TelegramClient::generateSequence(bool confirmed)
     return result;
 }
 
+//TODO: Fix INPUT_METHOD_INVALID
 void TelegramClient::sendMsgsAck()
 {
     if (!apiReady()) return;
@@ -788,16 +762,12 @@ void TelegramClient::sendMsgsAck()
     while (!confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);
 
-#ifndef QT_NO_DEBUG_OUTPUT
         qDebug() << "MSGACK SENT:";
-#endif
         TelegramVector msgIds;
         QList<qint64> forAck = confirm.mid(0, 8192);
         for (qint32 i = 0; i < forAck.size(); ++i) {
             msgIds << forAck[i];
-#ifndef QT_NO_DEBUG_OUTPUT
             qDebug() << forAck[i];
-#endif
             confirm.removeOne(forAck[i]);
         }
 
@@ -828,13 +798,11 @@ QByteArray TelegramClient::gzipPacket(QByteArray data)
 qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm, bool binary)
 {
     if (state < AUTHORIZED) return 0;
-    if (!ignoreConfirm) sendMsgsAck();
+    //if (!ignoreConfirm) sendMsgsAck();
 
     if (raw.isEmpty()) return 0;
 
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Sending MTProto object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
-#endif
 
     qint32 packetConId = qFromLittleEndian<qint32>((const uchar*) raw.mid(0, 4).constData());
     if (!binary && raw.size() > 255) raw = gzipPacket(raw);
@@ -899,16 +867,12 @@ void TelegramClient::initConnection()
 void TelegramClient::sync()
 {
     sessionFile.setValue("session", session.serialize());
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "Session synced.";
-#endif
 }
 
 void TelegramClient::handleDhGenFail(QByteArray data, qint64 mtm)
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "DH generation failed.";
-#endif
 
     //TODO reauth
     emit gotDHError(true);
@@ -917,9 +881,7 @@ void TelegramClient::handleDhGenFail(QByteArray data, qint64 mtm)
 
 void TelegramClient::handleDhGenRetry(QByteArray data, qint64 mtm)
 {
-#ifndef QT_NO_DEBUG_OUTPUT
     qDebug() << "DH generation requires a retry.";
-#endif
 
     //TODO reauth
     emit gotDHError(false);

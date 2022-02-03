@@ -98,7 +98,36 @@ void TelegramClient::handleAuthorization(QByteArray data, qint64 mtm)
 
 qint64 TelegramClient::getUpdatesState()
 {
+    qDebug() << "[LOG] Getting updates state.";
+
     TGOBJECT(getState, TLType::UpdatesGetStateMethod);
 
     return sendMTObject<&writeTLMethodUpdatesGetState>(getState);
+}
+
+void TelegramClient::handleUpdatesState(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLUpdatesState(packet, var);
+    TelegramObject state = var.toMap();
+
+    this->updatePts = qMax(this->updatePts, state["pts"].toInt());
+    this->updateQts = qMax(this->updateQts, state["qts"].toInt());
+    this->updateDate = qMax(this->updateDate, state["date"].toInt());
+    this->updateSeq = qMax(this->updateSeq, state["seq"].toInt());
+}
+
+qint64 TelegramClient::getUpdatesDifference()
+{
+    qDebug() << "[LOG] Getting updates difference.";
+
+    TGOBJECT(getDifference, TLType::UpdatesGetDifferenceMethod);
+
+    getDifference["pts"] = this->updatePts;
+    getDifference["qts"] = this->updateQts;
+    getDifference["date"] = this->updateDate;
+
+    return sendMTObject<&writeTLMethodUpdatesGetDifference>(getDifference);
 }

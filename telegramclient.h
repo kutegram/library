@@ -7,13 +7,14 @@
 #include "telegramstream.h"
 #include <QTcpSocket>
 #include <QList>
-#include <QMap>
+#include <QHash>
 #include <QSettings>
 #include "tlmessages.h"
 #include <QMutex>
 #if QT_VERSION >= 0x040702
 #include <QNetworkSession>
 #endif
+#include <QTimer>
 
 enum State
 {
@@ -45,14 +46,15 @@ private:
     QNetworkSession* networkSession;
 #endif
     QSettings sessionFile;
+    QTimer timer;
 
     QByteArray nonce;
     QByteArray newNonce;
     QByteArray serverNonce;
     qint64 retryId;
 
-    QMap<qint64, qint32> messagesConIds;
-    QMap<qint64, QByteArray> messages;
+    QHash<qint64, qint32> messagesConIds;
+    QHash<qint64, QByteArray> messages;
     QList<QByteArray> resendRequired;
     QList<qint64> confirm;
 
@@ -62,6 +64,11 @@ private:
 
     QMutex readMutex;
     QMutex msgMutex;
+
+    qint32 updateDate;
+    qint32 updateSeq;
+    qint32 updatePts;
+    qint32 updateQts;
 
     template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
     qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
@@ -90,6 +97,8 @@ public:
     void handleBadMsgNotification(QByteArray data, qint64 mtm);
     void handleNewSessionCreated(QByteArray data, qint64 mtm);
     void handleRpcError(QByteArray data, qint64 mtm);
+    void handlePong(QByteArray data, qint64 mtm);
+
     void handleConfig(QByteArray data, qint64 mtm);
     void handleMsgCopy(QByteArray data, qint64 mtm);
     void handleDhGenRetry(QByteArray data, qint64 mtm);
@@ -106,10 +115,17 @@ public:
     void handleMessages(QByteArray data, qint64 mtm);
     void handleMessagesSlice(QByteArray data, qint64 mtm);
     void handleChannelMessages(QByteArray data, qint64 mtm);
+    void handleUpdatesState(QByteArray data, qint64 mtm);
+    void handleUpdatesTooLong(QByteArray data, qint64 mtm);
+    void handleUpdateShortMessage(QByteArray data, qint64 mtm);
+    void handleUpdateShortChatMessage(QByteArray data, qint64 mtm);
+    void handleUpdateShort(QByteArray data, qint64 mtm);
+    void handleUpdatesCombined(QByteArray data, qint64 mtm);
+    void handleUpdates(QByteArray data, qint64 mtm);
+    void handleUpdateShortSentMessage(QByteArray data, qint64 mtm);
 
-    void handleUpdateLoginToken(QByteArray data, qint64 mtm);
-    void handleUpdateNewMessage(QByteArray data, qint64 mtm);
-    void handleUpdateNewChannelMessage(QByteArray data, qint64 mtm);
+    //TODO Mutex for handleUpdates* and applyUpdate?
+    void applyUpdate(TelegramObject obj, qint64 mtm);
 
     void initConnection();
 
@@ -121,10 +137,13 @@ public:
 
     State getState();
 
+    qint64 pingDelayDisconnect(qint64 ping_id, qint32 delay); //TODO: handle pong
+
     qint64 exportLoginToken(); //TODO QR-code login
     qint64 sendCode(QString phone_number);
     qint64 signIn(QString phone_number, QString phone_code_hash, QString phone_code);
     qint64 getUpdatesState(); //TODO updates.state handle
+    qint64 getUpdatesDifference(); //TODO updates.difference handle
     qint64 getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
     qint64 getHistory(TLInputPeer peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
     qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
@@ -168,6 +187,7 @@ private slots:
     void socket_error(QAbstractSocket::SocketError error);
     void networkSession_opened();
     void finishDCMigration();
+    void timer_timeout();
 };
 
 template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm, bool binary)

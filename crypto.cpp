@@ -1,9 +1,5 @@
 #include "crypto.h"
 
-#ifndef QT_NO_DEBUG_OUTPUT
-#include <QDebug>
-#endif
-
 #include <QDateTime>
 #include "thirdparty/picosha2.h"
 #include "thirdparty/aes.hpp"
