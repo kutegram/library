@@ -123,6 +123,7 @@ void TelegramClient::timer_timeout()
 {
     if (isOpened() && isAuthorized()) {
         pingDelayDisconnect(0, timer.interval() * 5 / 4);
+        sendMsgsAck();
     } else {
         timer.stop();
     }
@@ -801,7 +802,7 @@ QByteArray TelegramClient::gzipPacket(QByteArray data)
 qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm, bool binary)
 {
     if (state < AUTHORIZED) return 0;
-    if (!ignoreConfirm) sendMsgsAck();
+    //if (!ignoreConfirm) sendMsgsAck();
 
     if (raw.isEmpty()) return 0;
 
