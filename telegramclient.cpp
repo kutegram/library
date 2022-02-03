@@ -12,6 +12,7 @@
 #endif
 #include <openssl/bn.h>
 #include <qcompressor.h>
+#include <QDebug>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 

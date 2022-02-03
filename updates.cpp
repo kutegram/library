@@ -1,5 +1,6 @@
 #include "telegramclient.h"
 #include "tlschema.h"
+#include <QDebug>
 
 void TelegramClient::handleUpdatesTooLong(QByteArray data, qint64 mtm)
 {
