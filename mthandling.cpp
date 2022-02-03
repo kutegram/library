@@ -1,11 +1,10 @@
 #include "telegramclient.h"
 
 #include "mtschema.h"
-#include "cryptopp/gzip.h"
 #include <QStringList>
 #include <QDebug>
-
-using namespace CryptoPP;
+#include <QtEndian>
+#include <qcompressor.h>
 
 qint64 TelegramClient::pingDelayDisconnect(qint64 ping_id, qint32 delay)
 {
@@ -70,15 +69,11 @@ void TelegramClient::handleGzipPacked(QByteArray data, qint64 mtm)
 
     QVariant var;
     readByteArray(packet, var);
-    data = var.toByteArray();
 
-    Gunzip unzipper;
-    unzipper.Put((const byte*) data.constData(), data.size());
-    unzipper.MessageEnd();
-
-    data.reserve(unzipper.MaxRetrievable());
-    data.resize(unzipper.MaxRetrievable());
-    unzipper.Get((byte*) data.data(), data.size());
+    if (!QCompressor::gzipDecompress(var.toByteArray(), data)) {
+        qDebug() << "[ERROR] Gzip decompression error.";
+        return;
+    }
 
     handleMessage(data, mtm);
 }

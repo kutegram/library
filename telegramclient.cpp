@@ -10,6 +10,8 @@
 #if QT_VERSION >= 0x040702
 #include <QNetworkConfigurationManager>
 #endif
+#include <openssl/bn.h>
+#include <qcompressor.h>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
@@ -409,7 +411,7 @@ void TelegramClient::socket_error(QAbstractSocket::SocketError error)
 
 void TelegramClient::sendPlainPacket(QByteArray raw)
 {
-    qDebug() << "Sending plain object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
+    qDebug() << "Sending plain object: ( id" << QByteArray::number(qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()), 16) << ")";
 
     TelegramPacket packet;
 
@@ -451,7 +453,7 @@ QByteArray TelegramClient::readMessage()
 
     length *= 4;
 
-    qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket.bytesAvailable() << "/" << length << ")";
+    //qDebug() << "AVALIABLE BYTES AND REQUIRED (" << socket.bytesAvailable() << "/" << length << ")";
 
     QByteArray i;
     i.reserve(length);
@@ -550,18 +552,17 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
     reqDHParams["public_key_fingerprint"] = matched[0].fingerprint;
 
     //Generating PQInnerData
-    //TGOBJECT(pqInnerData, MTType::PQInnerDataDc);
-    TGOBJECT(pqInnerData, PQINNERDATA_ID); //TODO: PQInnerDataDc doesn't works. Telegram, why?
+    TGOBJECT(pqInnerData, MTType::PQInnerDataDc);
     pqInnerData["pq"] = pqBytes;
     pqInnerData["p"] = pBytes;
     pqInnerData["q"] = qBytes;
     pqInnerData["nonce"] = nonce;
     pqInnerData["server_nonce"] = serverNonce;
     pqInnerData["new_nonce"] = newNonce = randomBytes(INT256_BYTES);
-    //pqInnerData["dc"] = DC_NUMBER; //required by PQInnerDataDc
+    pqInnerData["dc"] = session.currentDc; //required by PQInnerDataDc
 
     TelegramPacket pqInnerDataPacket;
-    writeMTPQInnerDataCustom(pqInnerDataPacket, pqInnerData);
+    writeMTPQInnerData(pqInnerDataPacket, pqInnerData);
     qDebug() << "PQInnerData:" << pqInnerDataPacket.toByteArray().toHex();
 
     QByteArray pqInnerArray = pqInnerDataPacket.toByteArray();
@@ -636,9 +637,9 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data, qint64 mtm)
 
     changeState(DH_STEP_6);
 
-    Integer bb = toBig(randomBytes(256));
-    Integer bg = toBig(gBytes);
-    ModularArithmetic mr(toBig(serverDHInnerData["dh_prime"].toByteArray()));
+    QByteArray randomByteArray = randomBytes(256);
+    QByteArray dhByteArray = serverDHInnerData["dh_prime"].toByteArray();
+    QByteArray gaByteArray = serverDHInnerData["g_a"].toByteArray();
 
     changeState(DH_STEP_7);
 
@@ -652,7 +653,7 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data, qint64 mtm)
     clientDHInnerData["nonce"] = nonce;
     clientDHInnerData["server_nonce"] = serverNonce;
     clientDHInnerData["retry_id"] = 0; //retryId++; //TODO retry id
-    clientDHInnerData["g_b"] = fromBig(mr.Exponentiate(bg, bb));
+    clientDHInnerData["g_b"] = encryptRSA(gBytes, dhByteArray, randomByteArray); //gBytes ^ randomByteArray mod dhByteArray
 
     TelegramPacket clientDHInnerDataPacket;
     writeMTClientDHInnerData(clientDHInnerDataPacket, clientDHInnerData);
@@ -664,7 +665,7 @@ void TelegramClient::handleServerDHParamsOk(QByteArray data, qint64 mtm)
 
     changeState(DH_STEP_8);
 
-    QByteArray mainKey = fromBig(mr.Exponentiate(toBig(serverDHInnerData["g_a"].toByteArray()), bb));
+    QByteArray mainKey = encryptRSA(gaByteArray, dhByteArray, randomByteArray); //gaByteArray ^ randomByteArray mod dhByteArray
     session.authKey = QByteArray(256 - mainKey.size(), 0) + mainKey;
 
     TelegramPacket setCDHPPacket;
@@ -780,15 +781,13 @@ QByteArray TelegramClient::gzipPacket(QByteArray data)
 {
     TGOBJECT(zipped, MTType::GzipPacked);
 
-    Gzip zip;
-    zip.Put((const byte*) data.constData(), data.size());
-    zip.MessageEnd();
+    QByteArray packedData;
+    if (!QCompressor::gzipCompress(data, packedData)) {
+        qDebug() << "[ERROR] Gzip compression error.";
+        return data;
+    }
 
-    data.reserve(zip.MaxRetrievable());
-    data.resize(zip.MaxRetrievable());
-    zip.Get((byte*) data.data(), data.size());
-
-    zipped["packed_data"] = data;
+    zipped["packed_data"] = packedData;
 
     TelegramPacket packet;
     writeMTObject(packet, zipped);

@@ -130,18 +130,6 @@ QByteArray xorArray(QByteArray a, QByteArray b)
     return result;
 }
 
-Integer toBig(QByteArray a)
-{
-    return Integer((const byte*) a.constData(), a.size());
-}
-
-QByteArray fromBig(Integer a)
-{
-    QByteArray hash(a.ByteCount(), 0);
-    for (qint32 i = 0; i < hash.size(); ++i) hash[i] = a.GetByte(a.ByteCount() - i - 1);
-    return hash;
-}
-
 QByteArray decryptAES256IGE(QByteArray data, QByteArray iv, QByteArray key)
 {
     QByteArray result(data);
@@ -162,7 +150,11 @@ QByteArray encryptAES256IGE(QByteArray data, QByteArray iv, QByteArray key)
 
 QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp)
 {
-    BIGNUM* x = BN_new(), n = BN_new(), e = BN_new(), r = BN_new();
+    //data ^ exp mod key
+    BIGNUM* x = BN_new();
+    BIGNUM* n = BN_new();
+    BIGNUM* e = BN_new();
+    BIGNUM* r = BN_new();
     BN_CTX* ctx = BN_CTX_new();
 
     BN_bin2bn((const unsigned char*) data.constData(), data.length(), x);
@@ -172,7 +164,7 @@ QByteArray encryptRSA(QByteArray data, QByteArray key, QByteArray exp)
 
     QByteArray resultArray(BN_num_bytes(r), 0);
     if (result) {
-        BN_bn2bin(r, resultArray.data());
+        BN_bn2bin(r, (unsigned char*) resultArray.data());
     } else resultArray.clear();
 
     BN_free(x);
@@ -194,25 +186,6 @@ QByteArray hashSHA256(QByteArray dataToHash)
 QByteArray hashSHA1(QByteArray dataToHash)
 {
     return QCryptographicHash::hash(dataToHash, QCryptographicHash::Sha1);
-}
-
-void writeMTPQInnerDataCustom(TelegramStream &stream, QVariant i, void* callback)
-{
-    TelegramObject obj = i.toMap();
-    switch (obj["_"].toInt()) {
-    case PQINNERDATA_ID:
-        writeInt32(stream, obj["_"], callback);
-        writeByteArray(stream, obj["pq"], callback);
-        writeByteArray(stream, obj["p"], callback);
-        writeByteArray(stream, obj["q"], callback);
-        writeInt128(stream, obj["nonce"], callback);
-        writeInt128(stream, obj["server_nonce"], callback);
-        writeInt256(stream, obj["new_nonce"], callback);
-    break;
-    default:
-        writeMTPQInnerData(stream, i, callback);
-    break;
-    }
 }
 
 QByteArray calcMessageKey(QByteArray authKey, QByteArray data)

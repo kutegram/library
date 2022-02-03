@@ -5,8 +5,6 @@
 #include <QString>
 #include "telegramstream.h"
 
-#define PQINNERDATA_ID 0x83c95aec
-
 struct DHKey
 {
     QByteArray publicKey;

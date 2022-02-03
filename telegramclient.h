@@ -87,6 +87,8 @@ private:
 public:
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 
+    //TODO: handleMsgsAck
+
     void handleResPQ(QByteArray data, qint64 mtm);
     void handleServerDHParamsOk(QByteArray data, qint64 mtm);
     void handleDhGenOk(QByteArray data, qint64 mtm);
