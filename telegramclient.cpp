@@ -412,7 +412,7 @@ void TelegramClient::socket_error(QAbstractSocket::SocketError error)
 
 void TelegramClient::sendPlainPacket(QByteArray raw)
 {
-    qDebug() << "Sending plain object: ( id" << QByteArray::number(qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()), 16) << ")";
+    qDebug() << "Sending plain object: ( id" << QByteArray::number(qFromLittleEndian<quint32>((uchar*) raw.mid(0, 4).data()), 16) << ")";
 
     TelegramPacket packet;
 

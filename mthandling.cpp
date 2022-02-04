@@ -131,7 +131,7 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
 
     readMTRpcError(packet, var);
     TelegramObject rpcError = var.toMap();
-    qDebug() << "Got RPC error:" << QString::number(messagesConIds[mtm], 16) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
+    qDebug() << "Got RPC error:" << QString::number((quint32) messagesConIds[mtm], 16) << rpcError["error_code"].toInt() << rpcError["error_message"].toString();
 
     QString errorMsg = rpcError["error_message"].toString();
 

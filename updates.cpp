@@ -131,7 +131,7 @@ void TelegramClient::handleUpdateShortSentMessage(QByteArray data, qint64 mtm)
 
 void TelegramClient::applyUpdate(TelegramObject obj, qint64 mtm)
 {
-    qDebug() << "[UPD]" << obj;
+    qDebug() << "[UPD] Got an update with ID:" << QString::number((quint32) GETID(obj), 16);
 }
 
 //void TelegramClient::handleUpdateLoginToken(QByteArray data, qint64 mtm)
