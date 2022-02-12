@@ -1,12 +1,11 @@
-#include "tlfiles.h"
-
 #include "telegramclient.h"
+#include "tlschema.h"
 
-qint64 TelegramClient::getFile(TLInputFileLocation location, qint32 limit, qint32 offset)
+qint64 TelegramClient::getFile(TObject location, qint32 limit, qint32 offset)
 {
     TGOBJECT(getFile, TLType::UploadGetFileMethod);
 
-    getFile["location"] = location.serialize();
+    getFile["location"] = location;
     getFile["offset"] = offset;
     getFile["limit"] = limit;
 

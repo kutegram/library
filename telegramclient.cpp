@@ -867,7 +867,7 @@ void TelegramClient::initConnection()
 void TelegramClient::sync()
 {
     sessionFile.setValue("session", session.serialize());
-    sessionFile.sync();
+    //sessionFile.sync();
     qDebug() << "Session synced.";
 }
 

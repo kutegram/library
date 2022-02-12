@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QtEndian>
 #include <qcompressor.h>
+#include "tlschema.h"
 
 qint64 TelegramClient::pingDelayDisconnect(qint64 ping_id, qint32 delay)
 {

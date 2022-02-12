@@ -9,7 +9,6 @@
 #include <QList>
 #include <QHash>
 #include <QSettings>
-#include "tlmessages.h"
 #include <QMutex>
 #if QT_VERSION >= 0x040702
 #include <QNetworkSession>
@@ -146,11 +145,11 @@ public:
     qint64 signIn(QString phone_number, QString phone_code_hash, QString phone_code);
     qint64 getUpdatesState(); //TODO updates.state handle
     qint64 getUpdatesDifference(); //TODO updates.difference handle
-    qint64 getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TLInputPeer offsetPeer = TLInputPeer(), qint32 limit = 40);
-    qint64 getHistory(TLInputPeer peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
-    qint64 getFile(TLInputFileLocation location, qint32 limit = 524288, qint32 offset = 0);
-    qint64 sendMessage(TLInputPeer peer, QString message); //TODO handle result: Updates
-    qint64 getMessages(QList<TLInputMessage> ids);
+    qint64 getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TObject offsetPeer = TObject(), qint32 limit = 40);
+    qint64 getHistory(TObject peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
+    qint64 getFile(TObject location, qint32 limit = 524288, qint32 offset = 0);
+    qint64 sendMessage(TObject peer, QString message); //TODO handle result: Updates
+    qint64 getMessages(TVector ids);
 
     void reconnectToDC(qint32 dcId);
 signals:
@@ -167,12 +166,12 @@ signals:
     void gotSentCode(qint64 mtm, QString phone_code_hash); //TODO timeout and more params
     void gotAuthorization(qint64 mtm);
 
-    void gotDialogs(qint64 mtm, qint32 count, QList<TLDialog> dialogs, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users);
-    void gotMessages(qint64 mtm, qint32 count, QList<TLMessage> messages, QList<TLChat> chats, QList<TLUser> users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
-    void gotFilePart(qint64 mtm, TLType::Types type, qint32 mtime, QByteArray bytes);
+    void gotDialogs(qint64 mtm, qint32 count, TVector dialogs, TVector messages, TVector chats, TVector users);
+    void gotMessages(qint64 mtm, qint32 count, TVector messages, TVector chats, TVector users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
+    void gotFilePart(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
 
-    void gotNewMessage(qint64 mtm, TLMessage msg);
-    //TODO void gotFullFile(qint64 mtm, TLType::Types type, qint32 mtime, QByteArray bytes);
+    void gotNewMessage(qint64 mtm, TObject msg);
+    //TODO void gotFullFile(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
 public slots:
     void start();
     void stop();

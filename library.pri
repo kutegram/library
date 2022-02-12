@@ -21,9 +21,8 @@ HEADERS += \
     $$PWD/mtschema.h \
     $$PWD/tlschema.h \
     $$PWD/crypto.h \
-    $$PWD/tlmessages.h \
-    $$PWD/tlfiles.h \
-    $$PWD/qcompressor.h
+    $$PWD/qcompressor.h \
+    $$PWD/tl.h
 
 SOURCES += \
     $$PWD/telegramclient.cpp \
@@ -34,9 +33,10 @@ SOURCES += \
     $$PWD/crypto.cpp \
     $$PWD/mthandling.cpp \
     $$PWD/telegramapi.cpp \
-    $$PWD/tlmessages.cpp \
-    $$PWD/tlfiles.cpp \
+    $$PWD/messageslayer.cpp \
+    $$PWD/fileslayer.cpp \
     $$PWD/updates.cpp \
-    $$PWD/qcompressor.cpp
+    $$PWD/qcompressor.cpp \
+    $$PWD/tl.cpp
 
 INCLUDEPATH += $$PWD
