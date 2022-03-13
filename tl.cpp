@@ -42,7 +42,7 @@ TObject getInputPeer(TObject obj)
 
         return v;
     }
-    case User:
+    case TLType::User:
     case UserEmpty:
     {
         TOBJECT(v, InputPeerUser);

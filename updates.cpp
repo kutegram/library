@@ -93,18 +93,19 @@ void TelegramClient::handleUpdates(QByteArray data, qint64 mtm)
     readTLUpdates(packet, var);
     TelegramObject obj = var.toMap();
 
-    if (this->updateSeq + 1 == obj["seq"].toInt()) {
-        TelegramVector updates = obj["updates"].toList();
-        for (qint32 i = 0; i < updates.size(); ++i)
-            applyUpdate(updates[i].toMap(), mtm);
+    //Sequence always is zero.
+//    if (this->updateSeq + 1 == obj["seq"].toInt()) {
+    TelegramVector updates = obj["updates"].toList();
+    for (qint32 i = 0; i < updates.size(); ++i)
+        applyUpdate(updates[i].toMap(), mtm);
 
-        this->updateSeq = qMax(this->updateSeq, obj["seq"].toInt());
-        this->updateDate = qMax(this->updateDate, obj["date"].toInt());
-    } else if (this->updateSeq + 1 < obj["seq"].toInt()) {
-        getUpdatesDifference();
-    } else {
-        qDebug() << "[UPD] Got an Updates that already applied. Weird.";
-    }
+    this->updateSeq = qMax(this->updateSeq, obj["seq"].toInt());
+    this->updateDate = qMax(this->updateDate, obj["date"].toInt());
+//    } else if (this->updateSeq + 1 < obj["seq"].toInt()) {
+//        getUpdatesDifference();
+//    } else {
+//        qDebug() << "[UPD] Got an Updates that already applied. Weird.";
+//    }
 }
 
 void TelegramClient::handleUpdateShortSentMessage(QByteArray data, qint64 mtm)
@@ -125,13 +126,20 @@ void TelegramClient::handleUpdateShortSentMessage(QByteArray data, qint64 mtm)
     } else if (this->updatePts + obj["pts_count"].toInt() < obj["pts"].toInt()) {
         getUpdatesDifference();
     } else {
-        qDebug() << "[UPD] Got an UpdateShortSendMessage that already applied. Weird.";
+        qDebug() << "[UPD] Got an UpdateShortSentMessage that already applied. Weird.";
     }
 }
 
 void TelegramClient::applyUpdate(TelegramObject obj, qint64 mtm)
 {
     qDebug() << "[UPD] Got an update with ID:" << QString::number((quint32) GETID(obj), 16);
+
+    switch (GETID(obj)) {
+    case TLType::UpdateNewMessage:
+    case TLType::UpdateNewChannelMessage:
+        emit updateNewMessage(obj["message"].toMap(), obj["pts"].toInt(), obj["pts_count"].toInt());
+        break;
+    }
 }
 
 //void TelegramClient::handleUpdateLoginToken(QByteArray data, qint64 mtm)

@@ -13,6 +13,7 @@
 #include <openssl/bn.h>
 #include <qcompressor.h>
 #include <QDebug>
+#include <cstdlib>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
@@ -121,7 +122,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
 void TelegramClient::timer_timeout()
 {
     if (isOpened() && isAuthorized()) {
-        pingDelayDisconnect(0, timer.interval() * 5 / 4);
+        pingDelayDisconnect(0, timer.interval() * 1.2);
         sendMsgsAck();
     } else {
         timer.stop();
@@ -428,7 +429,7 @@ void TelegramClient::sendMessage(QByteArray raw)
 {
     if (!isOpened()) return;
 
-    qint32 length = raw.length() / 4;
+    qint32 length = raw.length() * 0.25;
     if (length >= 127) {
         QByteArray header(4, 0);
         qToLittleEndian(length, (uchar*) header.data());
@@ -534,7 +535,9 @@ void TelegramClient::handleResPQ(QByteArray data, qint64 mtm)
     QByteArray pqBytes = resPQ["pq"].toByteArray();
     quint64 pq = qFromBigEndian<quint64>((uchar*) pqBytes.data());
     quint32 p = findDivider(pq);
-    quint32 q = pq / p;
+    lldiv_t output;
+    output = lldiv(pq, p);
+    quint32 q = output.quot;
     if (p > q) qSwap(p, q);
 
     QByteArray pBytes(INT32_BYTES, 0);
