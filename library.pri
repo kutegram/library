@@ -1,16 +1,16 @@
 QT += network
 
-INCLUDEPATH += C:/OpenSSL-Win32/include
-
 include(qt-json/qt-json.pri)
 include(thirdparty/thirdparty.pri)
 
-win32:LIBS += -LC:/OpenSSL-Win32/lib
-win32:LIBS += -llibcrypto
 symbian:LIBS += -llibcrypto
-# unix:LIBS += -lcrypto - ignore it for Symbian?
-win32:INCLUDEPATH += C:/OpenSSL-Win32/include
-win32:include(zlib/zlib.pri)
+!symbian {
+    win32:LIBS += -LC:/OpenSSL-Win32/lib
+    win32:LIBS += -llibcrypto
+    win32:INCLUDEPATH += C:/OpenSSL-Win32/include
+    win32:include(zlib/zlib.pri)
+    unix:LIBS += -lcrypto
+}
 
 HEADERS += \
     $$PWD/telegramclient.h \
