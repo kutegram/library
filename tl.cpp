@@ -36,7 +36,7 @@ QVariant getPeerId(TObject obj)
     case InputPeerChannelFromMessage:
         return obj["channel_id"];
     default:
-        qWarning() << "[getPeerId] Invalid object.";
+        qWarning() << "[getPeerId] Invalid object." << ID(obj);
         return QVariant();
     }
 }
@@ -76,7 +76,7 @@ TObject getInputPeer(TObject obj)
     }
     default:
     {
-        qWarning() << "[getInputPeer] Empty object.";
+        qWarning() << "[getInputPeer] Empty object." << ID(obj);
 
         TOBJECT(v, InputPeerEmpty);
 
@@ -107,7 +107,7 @@ TObject getInputMessage(TObject obj)
         return v;
     }
     default:
-        qWarning() << "[getInputMessage] Invalid object.";
+        qWarning() << "[getInputMessage] Invalid object." << ID(obj);
         return TObject();
     }
 }
