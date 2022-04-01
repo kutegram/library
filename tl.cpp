@@ -16,11 +16,25 @@ QVariant getPeerId(TObject obj)
     case InputUserEmpty:
         return 0;
     case InputUserSelf:
-        return 0; //TODO: current ID
+        return 0; //TODO: current account ID
     case InputUser:
         return obj["user_id"];
     case InputUserFromMessage:
         return obj["user_id"];
+    case InputPeerEmpty:
+        return 0;
+    case InputPeerSelf:
+        return 0; //TODO: current account ID
+    case InputPeerChat:
+        return obj["chat_id"];
+    case InputPeerUser:
+        return obj["user_id"];
+    case InputPeerChannel:
+        return obj["channel_id"];
+    case InputPeerUserFromMessage:
+        return obj["user_id"];
+    case InputPeerChannelFromMessage:
+        return obj["channel_id"];
     default:
         qWarning() << "[getPeerId] Invalid object.";
         return QVariant();
