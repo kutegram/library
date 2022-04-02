@@ -139,6 +139,14 @@ void TelegramClient::applyUpdate(TelegramObject obj, qint64 mtm)
     case TLType::UpdateNewChannelMessage:
         emit updateNewMessage(obj["message"].toMap(), obj["pts"].toInt(), obj["pts_count"].toInt());
         break;
+    case TLType::UpdateEditMessage:
+    case TLType::UpdateEditChannelMessage:
+        emit updateEditMessage(obj["message"].toMap(), obj["pts"].toInt(), obj["pts_count"].toInt());
+        break;
+    case TLType::UpdateDeleteMessages:
+    case TLType::UpdateDeleteChannelMessages:
+        emit updateDeleteMessages(obj["messages"].toList(), obj["pts"].toInt(), obj["pts_count"].toInt());
+        break;
     }
 }
 

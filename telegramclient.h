@@ -174,6 +174,8 @@ signals:
     //TODO void gotFullFile(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
 
     void updateNewMessage(TObject message, qint32 pts, qint32 pts_count);
+    void updateEditMessage(TObject message, qint32 pts, qint32 pts_count);
+    void updateDeleteMessages(TVector messages, qint32 pts, qint32 pts_count);
 public slots:
     void start();
     void stop();
