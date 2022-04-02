@@ -35,10 +35,6 @@ QString osName()
         return "Symbian^3";
     case QSysInfo::SV_SF_4:
         return "Symbian^4";
-    case QSysInfo::SV_API_5_3:
-        return "S60 API v5.3";
-    case QSysInfo::SV_API_5_4:
-        return "S60 API v5.4";
     default:
         return "Symbian";
     }
