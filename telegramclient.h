@@ -39,6 +39,7 @@ class TelegramClient : public QObject
 private:
     //TODO support all MTProto service-messages.
     //TODO move users, chats, messages, MTProto message, confirm to session
+    //TODO do not handle packets recieved after reconnect
     TelegramSession session;
     QTcpSocket socket;
 #if QT_VERSION >= 0x040702
