@@ -188,6 +188,11 @@ bool TelegramClient::isAuthorized()
     return !session.authKey.key.isEmpty() && session.salt && session.authKey.auxHash && session.authKey.id;
 }
 
+qint64 TelegramClient::userId()
+{
+    return session.userId;
+}
+
 bool TelegramClient::isOpened()
 {
     return socket.isOpen();

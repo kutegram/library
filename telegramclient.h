@@ -137,6 +137,8 @@ public:
     bool isConnected();
     bool apiReady();
 
+    qint64 userId();
+
     State getState();
 
     qint64 pingDelayDisconnect(qint64 ping_id, qint32 delay); //TODO: handle pong
