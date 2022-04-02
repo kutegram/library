@@ -29,8 +29,6 @@ QString osName()
         return "Symbian OS v9.3";
     case QSysInfo::SV_9_4:
         return "Symbian OS v9.4";
-    case QSysInfo::SV_SF_1:
-        return "S60 5th Edition";
     case QSysInfo::SV_SF_2:
         return "Symbian^2";
     case QSysInfo::SV_SF_3:
