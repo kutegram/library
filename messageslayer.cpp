@@ -8,7 +8,7 @@ qint64 TelegramClient::getDialogs(qint32 offsetDate, qint32 offsetId, TObject of
 {
     TGOBJECT(getDialogs, TLType::MessagesGetDialogsMethod);
 
-    getDialogs["exclude_pinned"] = true;
+    //getDialogs["exclude_pinned"] = true;
     getDialogs["folder_id"] = 0; //0 for main list, 1 for archived chats
     getDialogs["offset_date"] = offsetDate;
     getDialogs["offset_id"] = offsetId;
