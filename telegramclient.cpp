@@ -14,6 +14,7 @@
 #include <qcompressor.h>
 #include <QDebug>
 #include <cstdlib>
+#include "systemname.h"
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
@@ -713,32 +714,6 @@ void TelegramClient::handleDhGenOk(QByteArray data, qint64 mtm)
     changeState(AUTHORIZED);
 }
 
-//TODO: Use QSysInfo
-QString osName()
-{
-#if defined(Q_OS_ANDROID)
-    return QString("Android");
-#elif defined(Q_OS_SYMBIAN)
-    return QString("Symbian");
-#elif defined(Q_OS_BLACKBERRY)
-    return QString("Blackberry OS");
-#elif defined(Q_OS_IOS)
-    return QString("iOS");
-#elif defined(Q_OS_MACOS)
-    return QString("macOS");
-#elif defined(Q_OS_WINCE)
-    return QString("Windows CE");
-#elif defined(Q_OS_WIN)
-    return QString("Windows");
-#elif defined(Q_OS_LINUX)
-    return QString("Linux");
-#elif defined(Q_OS_UNIX)
-    return QString("Unix");
-#else
-    return QString("Unknown");
-#endif
-}
-
 qint64 TelegramClient::getNewMessageId()
 {
     msgMutex.lock();
@@ -846,7 +821,7 @@ void TelegramClient::initConnection()
 
     TGOBJECT(initRequest, TLType::InitConnectionMethod);
     initRequest["api_id"] = APP_ID;
-    initRequest["device_model"] = osName().append("-based Device");
+    initRequest["device_model"] = deviceName();
     initRequest["system_version"] = osName();
     initRequest["app_version"] = QApplication::applicationVersion();
     initRequest["system_lang_code"] = QLocale::system().name().split("_")[0];

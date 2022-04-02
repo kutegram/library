@@ -1,5 +1,14 @@
 QT += network
 
+load(mobilityconfig)
+contains(MOBILITY_CONFIG, systeminfo) {
+    CONFIG += mobility
+    MOBILITY += systeminfo
+    DEFINES += MOBILITY_READY=1
+} else {
+    message(Mobility API not available)
+}
+
 include(qt-json/qt-json.pri)
 include(thirdparty/thirdparty.pri)
 
@@ -22,7 +31,8 @@ HEADERS += \
     $$PWD/tlschema.h \
     $$PWD/crypto.h \
     $$PWD/qcompressor.h \
-    $$PWD/tl.h
+    $$PWD/tl.h \
+    $$PWD/systemname.h
 
 SOURCES += \
     $$PWD/telegramclient.cpp \
@@ -37,6 +47,7 @@ SOURCES += \
     $$PWD/fileslayer.cpp \
     $$PWD/updates.cpp \
     $$PWD/qcompressor.cpp \
-    $$PWD/tl.cpp
+    $$PWD/tl.cpp \
+    $$PWD/systemname.cpp
 
 INCLUDEPATH += $$PWD
