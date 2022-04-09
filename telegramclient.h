@@ -15,33 +15,112 @@
 #endif
 #include <QTimer>
 
+enum State
+{
+    STOPPED,
+    CONNECTING,
+    DH_STEP_1,
+    DH_STEP_2,
+    DH_STEP_3,
+    DH_STEP_4,
+    DH_STEP_5,
+    DH_STEP_6,
+    DH_STEP_7,
+    DH_STEP_8,
+    DH_STEP_9,
+    AUTHORIZED,
+    INITED,
+    LOGGED_IN
+};
+
+Q_DECLARE_METATYPE(State)
+
 class TelegramClient : public QObject
 {
     Q_OBJECT
 public:
-    enum State
-    {
-        STOPPED,
-        CONNECTING,
-        DH_STEP_1,
-        DH_STEP_2,
-        DH_STEP_3,
-        DH_STEP_4,
-        DH_STEP_5,
-        DH_STEP_6,
-        DH_STEP_7,
-        DH_STEP_8,
-        DH_STEP_9,
-        AUTHORIZED,
-        INITED,
-        LOGGED_IN
-    };
-    Q_ENUMS(State)
-
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
+private:
+    //TODO support all MTProto service-messages.
+    //TODO move users, chats, messages, MTProto message, confirm to session
+    //TODO do not handle packets recieved after reconnect
+    TelegramSession session;
+    QTcpSocket socket;
+#if QT_VERSION >= 0x040702
+    QNetworkSession* networkSession;
+#endif
+    QSettings sessionFile;
+    QTimer timer;
+
+    QByteArray nonce;
+    QByteArray newNonce;
+    QByteArray serverNonce;
+    qint64 retryId;
+
+    QHash<qint64, qint32> messagesConIds;
+    QHash<qint64, QByteArray> messages;
+    QList<QByteArray> resendRequired;
+    QList<qint64> confirm;
+
+    TelegramObject dcConfig;
+
+    State state;
+
+    QMutex readMutex;
+    QMutex msgMutex;
+
+    qint32 updateDate;
+    qint32 updateSeq;
+    qint32 updatePts;
+    qint32 updateQts;
+
+    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
+    qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
+    void sendPlainPacket(QByteArray raw);
+    //TODO use timer and floodrate
+    void sendMessage(QByteArray raw);
+    QByteArray readMessage();
+    void handleMessage(QByteArray messageData, qint64 mtm);
+
+    qint64 getNewMessageId();
+    qint32 generateSequence(bool confirmed);
+    void changeState(State state);
+
+    void sendMsgsAck();
+    QByteArray gzipPacket(QByteArray data);
+signals:
+    void handleResponse(qint64 mtm, QByteArray data, qint32 conId);
+    void stateChanged(State state);
+
+    void gotSocketError(QAbstractSocket::SocketError error);
+    void gotMTError(qint32 error_code);
+    void gotDHError(bool fail);
+    void gotMessageError(qint64 mtm, qint32 error_code);
+    void gotRPCError(qint64 mtm, qint32 error_code, QString error_message, bool handled);
+
+    void gotLoginToken(qint64 mtm, qint32 expires, QString tokenUrl);
+    void gotSentCode(qint64 mtm, QString phone_code_hash); //TODO timeout and more params
+    void gotAuthorization(qint64 mtm);
+
+    void gotDialogs(qint64 mtm, qint32 count, TVector dialogs, TVector messages, TVector chats, TVector users);
+    void gotMessages(qint64 mtm, qint32 count, TVector messages, TVector chats, TVector users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
+    void gotFilePart(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
+
+    void gotNewMessage(qint64 mtm, TObject msg);
+    //TODO void gotFullFile(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
+
+    void updateNewMessage(TObject message, qint32 pts, qint32 pts_count);
+    void updateEditMessage(TObject message, qint32 pts, qint32 pts_count);
+    void updateDeleteMessages(TVector messages, qint32 pts, qint32 pts_count);
+public slots:
+    void start();
+    void stop();
+    void sync();
+    void reset();
+    QByteArray message(qint64 mtm);
+    qint32 messageConstructor(qint64 mtm);
 
     //TODO: handleMsgsAck
-
     void handleResPQ(QByteArray data, qint64 mtm);
     void handleServerDHParamsOk(QByteArray data, qint64 mtm);
     void handleDhGenOk(QByteArray data, qint64 mtm);
@@ -92,7 +171,7 @@ public:
 
     qint64 userId();
 
-    TelegramClient::State getState();
+    State getState();
 
     qint64 pingDelayDisconnect(qint64 ping_id, qint32 delay); //TODO: handle pong
 
@@ -108,85 +187,6 @@ public:
     qint64 getMessages(TVector ids);
 
     void reconnectToDC(qint32 dcId);
-private:
-    //TODO support all MTProto service-messages.
-    //TODO move users, chats, messages, MTProto message, confirm to session
-    //TODO do not handle packets recieved after reconnect
-    TelegramSession session;
-    QTcpSocket socket;
-#if QT_VERSION >= 0x040702
-    QNetworkSession* networkSession;
-#endif
-    QSettings sessionFile;
-    QTimer timer;
-
-    QByteArray nonce;
-    QByteArray newNonce;
-    QByteArray serverNonce;
-    qint64 retryId;
-
-    QHash<qint64, qint32> messagesConIds;
-    QHash<qint64, QByteArray> messages;
-    QList<QByteArray> resendRequired;
-    QList<qint64> confirm;
-
-    TelegramObject dcConfig;
-
-    TelegramClient::State state;
-
-    QMutex readMutex;
-    QMutex msgMutex;
-
-    qint32 updateDate;
-    qint32 updateSeq;
-    qint32 updatePts;
-    qint32 updateQts;
-
-    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
-    qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
-    void sendPlainPacket(QByteArray raw);
-    //TODO use timer and floodrate
-    void sendMessage(QByteArray raw);
-    QByteArray readMessage();
-    void handleMessage(QByteArray messageData, qint64 mtm);
-
-    qint64 getNewMessageId();
-    qint32 generateSequence(bool confirmed);
-    void changeState(TelegramClient::State state);
-
-    void sendMsgsAck();
-    QByteArray gzipPacket(QByteArray data);
-signals:
-    void handleResponse(qint64 mtm, QByteArray data, qint32 conId);
-    void stateChanged(TelegramClient::State state);
-
-    void gotSocketError(QAbstractSocket::SocketError error);
-    void gotMTError(qint32 error_code);
-    void gotDHError(bool fail);
-    void gotMessageError(qint64 mtm, qint32 error_code);
-    void gotRPCError(qint64 mtm, qint32 error_code, QString error_message, bool handled);
-
-    void gotLoginToken(qint64 mtm, qint32 expires, QString tokenUrl);
-    void gotSentCode(qint64 mtm, QString phone_code_hash); //TODO timeout and more params
-    void gotAuthorization(qint64 mtm);
-
-    void gotDialogs(qint64 mtm, qint32 count, TVector dialogs, TVector messages, TVector chats, TVector users);
-    void gotMessages(qint64 mtm, qint32 count, TVector messages, TVector chats, TVector users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
-    void gotFilePart(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
-
-    void gotNewMessage(qint64 mtm, TObject msg);
-    //TODO void gotFullFile(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
-
-    void updateNewMessage(TObject message, qint32 pts, qint32 pts_count);
-    void updateEditMessage(TObject message, qint32 pts, qint32 pts_count);
-    void updateDeleteMessages(TVector messages, qint32 pts, qint32 pts_count);
-public slots:
-    void start();
-    void stop();
-    void sync();
-    void reset();
-    QByteArray message(qint64 mtm);
-    qint32 messageConstructor(qint64 mtm);
 
 private slots:
     void socket_connected();
