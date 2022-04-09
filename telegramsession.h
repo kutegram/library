@@ -39,6 +39,9 @@ struct TelegramSession
     qint32 importId;
     QByteArray importBytes;
 
+    QString lastPhoneNumber;
+    QString lastPhoneCodeHash;
+
     TelegramSession& deserialize(QVariantMap obj);
     QVariantMap serialize();
 };

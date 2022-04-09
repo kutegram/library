@@ -57,13 +57,21 @@ QVariantMap AuthKey::serialize()
 }
 
 TelegramSession::TelegramSession() :
-    authKey(), salt(), timeOffset(), id(), lastMessageId(), sequence(), userId(),
+    authKey(),
+    salt(),
+    timeOffset(),
+    id(),
+    lastMessageId(),
+    sequence(),
+    userId(),
     currentDc(DC_NUMBER),
     currentIp(DC_IP),
     currentPort(DC_PORT),
     migrateDc(),
     importId(),
-    importBytes()
+    importBytes(),
+    lastPhoneNumber(),
+    lastPhoneCodeHash()
 {
 }
 
@@ -87,6 +95,8 @@ TelegramSession& TelegramSession::deserialize(QVariantMap obj)
     migrateDc = obj["migrateDc"].toInt();
     importId = obj["importId"].toInt();
     importBytes = obj["importBytes"].toByteArray();
+    lastPhoneNumber = obj["lastPhoneNumber"].toString();
+    lastPhoneCodeHash = obj["lastPhoneCodeHash"].toString();
 
     return *this;
 }
@@ -108,6 +118,8 @@ QVariantMap TelegramSession::serialize()
     obj["migrateDc"] = migrateDc;
     obj["importId"] = importId;
     obj["importBytes"] = importBytes;
+    obj["lastPhoneNumber"] = lastPhoneNumber;
+    obj["lastPhoneCodeHash"] = lastPhoneCodeHash;
 
     return obj;
 }

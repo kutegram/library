@@ -15,30 +15,28 @@
 #endif
 #include <QTimer>
 
-enum State
-{
-    STOPPED = 0,
-    CONNECTING,
-    DH_STEP_1,
-    DH_STEP_2,
-    DH_STEP_3,
-    DH_STEP_4,
-    DH_STEP_5,
-    DH_STEP_6,
-    DH_STEP_7,
-    DH_STEP_8,
-    DH_STEP_9,
-    AUTHORIZED,
-    INITED,
-    LOGGED_IN
-};
-
-Q_DECLARE_METATYPE(State)
-
 class TelegramClient : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(State)
 public:
+    enum State
+    {
+        STOPPED = 0,
+        CONNECTING,
+        DH_STEP_1,
+        DH_STEP_2,
+        DH_STEP_3,
+        DH_STEP_4,
+        DH_STEP_5,
+        DH_STEP_6,
+        DH_STEP_7,
+        DH_STEP_8,
+        DH_STEP_9,
+        AUTHORIZED,
+        INITED,
+        LOGGED_IN
+    };
     explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
 private:
     //TODO support all MTProto service-messages.
@@ -74,9 +72,6 @@ private:
     qint32 updatePts;
     qint32 updateQts;
 
-    QString lastPhoneNumber;
-    QString lastPhoneCodeHash;
-
     template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
     qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
     void sendPlainPacket(QByteArray raw);
@@ -93,7 +88,7 @@ private:
     QByteArray gzipPacket(QByteArray data);
 signals:
     void handleResponse(qint64 mtm, QByteArray data, qint32 conId);
-    void stateChanged(State state);
+    void stateChanged(qint32 state);
 
     void gotSocketError(QAbstractSocket::SocketError error);
     void gotMTError(qint32 error_code);
@@ -174,7 +169,7 @@ public slots:
 
     qint64 userId();
 
-    State getState();
+    qint32 getState();
 
     qint64 pingDelayDisconnect(qint64 ping_id, qint32 delay); //TODO: handle pong
 

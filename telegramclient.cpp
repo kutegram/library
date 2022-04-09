@@ -87,9 +87,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     updateSeq(),
     updatePts(),
     updateQts(),
-    timer(this),
-    lastPhoneNumber(),
-    lastPhoneCodeHash()
+    timer(this)
 {
     session.deserialize(sessionFile.value("session").toMap());
 
@@ -172,14 +170,16 @@ void TelegramClient::changeState(State s)
     }
     case LOGGED_IN:
     {
-        lastPhoneNumber = "";
-        lastPhoneCodeHash = "";
+        session.lastPhoneNumber = "";
+        session.lastPhoneCodeHash = "";
+        sync();
+
         getUpdatesState();
         break;
     }
     }
 
-    emit stateChanged(s);
+    emit stateChanged((qint32) s);
 }
 
 bool TelegramClient::isLoggedIn()
@@ -202,9 +202,9 @@ bool TelegramClient::isOpened()
     return socket.isOpen();
 }
 
-State TelegramClient::getState()
+qint32 TelegramClient::getState()
 {
-    return state;
+    return (qint32) state;
 }
 
 bool TelegramClient::isConnected()
