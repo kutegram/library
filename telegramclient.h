@@ -17,7 +17,7 @@
 
 enum State
 {
-    STOPPED,
+    STOPPED = 0,
     CONNECTING,
     DH_STEP_1,
     DH_STEP_2,

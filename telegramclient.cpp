@@ -828,7 +828,9 @@ void TelegramClient::initConnection()
     initRequest["api_id"] = APP_ID;
     initRequest["device_model"] = deviceName();
     initRequest["system_version"] = osName();
-    initRequest["app_version"] = QApplication::applicationVersion();
+    QString appVersion = QApplication::applicationVersion();
+    if (appVersion.isEmpty()) appVersion = "1.0.0";
+    initRequest["app_version"] = appVersion;
     initRequest["system_lang_code"] = QLocale::system().name().split("_")[0];
     initRequest["lang_pack"] = "";
     initRequest["lang_code"] = QLocale::system().name().split("_")[0];
