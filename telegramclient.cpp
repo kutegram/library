@@ -140,7 +140,7 @@ qint32 TelegramClient::messageConstructor(qint64 mtm)
     return messagesConIds[mtm];
 }
 
-void TelegramClient::changeState(State s)
+void TelegramClient::changeState(TelegramClient::State s)
 {
     if (s == state) return;
     state = s;
@@ -198,7 +198,7 @@ bool TelegramClient::isOpened()
     return socket.isOpen();
 }
 
-State TelegramClient::getState()
+TelegramClient::State TelegramClient::getState()
 {
     return state;
 }
