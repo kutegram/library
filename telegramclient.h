@@ -74,6 +74,8 @@ private:
     qint32 updatePts;
     qint32 updateQts;
 
+    QString lastPhoneNumber;
+
     template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
     qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
     void sendPlainPacket(QByteArray raw);
@@ -177,7 +179,7 @@ public slots:
 
     qint64 exportLoginToken(); //TODO QR-code login
     qint64 sendCode(QString phone_number);
-    qint64 signIn(QString phone_number, QString phone_code_hash, QString phone_code);
+    qint64 signIn(QString phone_code_hash, QString phone_code, QString phone_number = QString());
     qint64 getUpdatesState(); //TODO updates.state handle
     qint64 getUpdatesDifference(); //TODO updates.difference handle
     qint64 getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TObject offsetPeer = TObject(), qint32 limit = 40);

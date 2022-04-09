@@ -87,7 +87,8 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     updateSeq(),
     updatePts(),
     updateQts(),
-    timer(this)
+    timer(this),
+    lastPhoneNumber()
 {
     session.deserialize(sessionFile.value("session").toMap());
 
@@ -170,6 +171,7 @@ void TelegramClient::changeState(State s)
     }
     case LOGGED_IN:
     {
+        lastPhoneNumber = "";
         getUpdatesState();
         break;
     }

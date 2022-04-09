@@ -58,6 +58,8 @@ qint64 TelegramClient::sendCode(QString phone_number)
     TGOBJECT(codeSettings, TLType::CodeSettings);
     sendCode["settings"] = codeSettings;
 
+    lastPhoneNumber = phone_number;
+
     return sendMTObject<&writeTLMethodAuthSendCode>(sendCode);
 }
 
@@ -72,9 +74,10 @@ void TelegramClient::handleSentCode(QByteArray data, qint64 mtm)
     emit gotSentCode(mtm, sentCode["phone_code_hash"].toString());
 }
 
-qint64 TelegramClient::signIn(QString phone_number, QString phone_code_hash, QString phone_code)
+qint64 TelegramClient::signIn(QString phone_code_hash, QString phone_code, QString phone_number)
 {
     TGOBJECT(signIn, TLType::AuthSignInMethod);
+    if (phone_number.isEmpty()) phone_number = lastPhoneNumber;
     signIn["phone_number"] = phone_number;
     signIn["phone_code_hash"] = phone_code_hash;
     signIn["phone_code"] = phone_code;
