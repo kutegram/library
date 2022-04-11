@@ -41,5 +41,7 @@ typedef QByteArray TInt256;
 QVariant getPeerId(TObject obj);
 TObject getInputPeer(TObject obj);
 TObject getInputMessage(TObject obj);
+qint32 commonPeerType(TObject peer);
+bool peersEqual(TObject peer1, TObject peer2);
 
 #endif // TL_H

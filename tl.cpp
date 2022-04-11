@@ -35,6 +35,20 @@ QVariant getPeerId(TObject obj)
         return obj["user_id"];
     case InputPeerChannelFromMessage:
         return obj["channel_id"];
+    case TLType::User:
+        return obj["id"];
+    case UserEmpty:
+        return obj["id"];
+    case Chat:
+        return obj["id"];
+    case ChatEmpty:
+        return obj["id"];
+    case ChatForbidden:
+        return obj["id"];
+    case Channel:
+        return obj["id"];
+    case ChannelForbidden:
+        return obj["id"];
     default:
         qWarning() << "[getPeerId] Invalid object." << ID(obj);
         return QVariant();
@@ -110,4 +124,38 @@ TObject getInputMessage(TObject obj)
         qWarning() << "[getInputMessage] Invalid object." << ID(obj);
         return TObject();
     }
+}
+
+qint32 commonPeerType(TObject peer)
+{
+    switch (ID(peer)) {
+    case InputUserEmpty:
+    case InputUserSelf:
+    case InputUser:
+    case InputUserFromMessage:
+    case TLType::User:
+    case UserEmpty:
+    case PeerUser:
+    case InputPeerEmpty:
+    case InputPeerSelf:
+    case InputPeerUser:
+    case InputPeerUserFromMessage:
+        return TLType::User;
+    case Chat:
+    case ChatEmpty:
+    case ChatForbidden:
+    case Channel:
+    case ChannelForbidden:
+    case PeerChat:
+    case PeerChannel:
+    case InputPeerChat:
+    case InputPeerChannel:
+    case InputPeerChannelFromMessage:
+        return Chat;
+    }
+}
+
+bool peersEqual(TObject peer1, TObject peer2)
+{
+    return commonPeerType(peer1) == commonPeerType(peer2) && getPeerId(peer1) == getPeerId(peer2);
 }
