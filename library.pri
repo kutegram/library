@@ -31,7 +31,6 @@ HEADERS += \
     $$PWD/tlschema.h \
     $$PWD/crypto.h \
     $$PWD/qcompressor.h \
-    $$PWD/tl.h \
     $$PWD/systemname.h
 
 SOURCES += \
