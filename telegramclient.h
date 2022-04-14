@@ -90,7 +90,7 @@ signals:
     void handleResponse(qint64 mtm, QByteArray data, qint32 conId);
     void stateChanged(qint32 state);
 
-    void gotSocketError(QAbstractSocket::SocketError error);
+    void gotSocketError(qint32 error);
     void gotMTError(qint32 error_code);
     void gotDHError(bool fail);
     void gotMessageError(qint64 mtm, qint32 error_code);

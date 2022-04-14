@@ -155,7 +155,7 @@ void TelegramClient::handleRpcError(QByteArray data, qint64 mtm)
         resendRequired.append(messages[mtm]);
     }
     else if (errorMsg.startsWith("INPUT_METHOD_INVALID_")) {
-        qDebug() << "INPUT_METHOD_INVALID_";
+        //TODO
     }
     else if (errorMsg == "AUTH_KEY_UNREGISTERED" || errorMsg == "SESSION_REVOKED") {
         reset();

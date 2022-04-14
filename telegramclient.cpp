@@ -418,7 +418,7 @@ void TelegramClient::socket_error(QAbstractSocket::SocketError error)
 {
     qDebug() << "Socket has got an error:" << error;
 
-    emit gotSocketError(error);
+    emit gotSocketError((qint32) error);
 }
 
 void TelegramClient::sendPlainPacket(QByteArray raw)
