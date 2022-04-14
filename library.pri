@@ -1,13 +1,14 @@
 QT += network
 
-# load(mobilityconfig)
-# contains(MOBILITY_CONFIG, systeminfo) {
-#     CONFIG += mobility
-#     MOBILITY += systeminfo
-#     DEFINES += MOBILITY_READY=1
-# } else {
-#     message(Mobility API not available)
-# }
+load(mobilityconfig)
+contains(MOBILITY_CONFIG, systeminfo) {
+    CONFIG += mobility
+    MOBILITY += systeminfo
+    DEFINES += MOBILITY_READY=1
+    message(Mobility API enabled)
+} else {
+    message(Mobility API not available)
+}
 
 include(qt-json/qt-json.pri)
 include(thirdparty/thirdparty.pri)
