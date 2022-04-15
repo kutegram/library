@@ -76,7 +76,7 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     confirm(),
     state(STOPPED),
     retryId(),
-    sessionFile(sessionId + ".session", QSettings::IniFormat, this),
+    sessionFile(QSettings::IniFormat, QSettings::UserScope, "Kutegram", sessionId, this),
     readMutex(QMutex::Recursive),
     msgMutex(QMutex::Recursive),
 #if QT_VERSION >= 0x040702
@@ -887,6 +887,8 @@ void TelegramClient::networkSession_opened()
     else id = config.identifier();
 
     sessionFile.setValue("network", id);
+
+    sync();
 #endif
 }
 
@@ -896,5 +898,8 @@ void TelegramClient::reset()
 
     session.authKey = AuthKey();
     session.userId = 0;
+    session.lastPhoneNumber = "";
+    session.lastPhoneCodeHash = "";
+
     sync();
 }

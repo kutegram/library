@@ -37,7 +37,7 @@ public:
         INITED,
         LOGGED_IN
     };
-    explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
+    explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");\
 private:
     //TODO support all MTProto service-messages.
     //TODO move users, chats, messages, MTProto message, confirm to session
