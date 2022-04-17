@@ -114,9 +114,9 @@ TObject getInputMessage(TObject obj)
     }
     case MessageReplyHeader:
     {
-        TOBJECT(v, InputMessageID);
+        TOBJECT(v, InputMessageReplyTo);
 
-        v["id"] = obj["reply_to_msg_id"];
+        v["id"] = obj["id"];
 
         return v;
     }
