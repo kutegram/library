@@ -173,6 +173,7 @@ void TelegramClient::changeState(State s)
         session.lastPhoneNumber = "";
         session.lastPhoneCodeHash = "";
         sync();
+        sessionFile.sync();
 
         getUpdatesState();
         break;
@@ -889,6 +890,7 @@ void TelegramClient::networkSession_opened()
     sessionFile.setValue("network", id);
 
     sync();
+    sessionFile.sync();
 #endif
 }
 
@@ -902,4 +904,5 @@ void TelegramClient::reset()
     session.lastPhoneCodeHash = "";
 
     sync();
+    sessionFile.sync();
 }
