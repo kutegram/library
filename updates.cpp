@@ -18,7 +18,7 @@ void TelegramClient::handleUpdateShortMessage(QByteArray data, qint64 mtm)
     TelegramObject obj = var.toMap();
 
     if (this->updatePts + obj["pts_count"].toInt() == obj["pts"].toInt()) {
-        //TODO: handle this update.
+        applyUpdate(obj, mtm);
 
         this->updatePts = qMax(this->updatePts, obj["pts"].toInt());
         this->updateDate = qMax(this->updateDate, obj["date"].toInt());
@@ -40,7 +40,7 @@ void TelegramClient::handleUpdateShortChatMessage(QByteArray data, qint64 mtm)
     TelegramObject obj = var.toMap();
 
     if (this->updatePts + obj["pts_count"].toInt() == obj["pts"].toInt()) {
-        //TODO: handle this update.
+        applyUpdate(obj, mtm);
 
         this->updatePts = qMax(this->updatePts, obj["pts"].toInt());
         this->updateDate = qMax(this->updateDate, obj["date"].toInt());
@@ -132,8 +132,6 @@ void TelegramClient::handleUpdateShortSentMessage(QByteArray data, qint64 mtm)
 
 void TelegramClient::applyUpdate(TelegramObject obj, qint64 mtm)
 {
-    qDebug() << "[UPD] Got an update with ID:" << QString::number((quint32) GETID(obj), 16);
-
     switch (GETID(obj)) {
     case TLType::UpdateNewMessage:
     case TLType::UpdateNewChannelMessage:
@@ -146,6 +144,35 @@ void TelegramClient::applyUpdate(TelegramObject obj, qint64 mtm)
     case TLType::UpdateDeleteMessages:
     case TLType::UpdateDeleteChannelMessages:
         emit updateDeleteMessages(obj["messages"].toList(), obj["pts"].toInt(), obj["pts_count"].toInt());
+        break;
+    case TLType::UpdateShortMessage:
+    {
+        ID_PROPERTY(obj) = TLType::Message;
+
+        TOBJECT(newPeer, TLType::PeerUser);
+        newPeer["user_id"] = obj["user_id"];
+        obj["from_id"] = obj["peer_id"] = newPeer;
+
+        emit updateNewMessage(obj, obj["pts"].toInt(), obj["pts_count"].toInt());
+        break;
+    }
+    case TLType::UpdateShortChatMessage:
+    {
+        ID_PROPERTY(obj) = TLType::Message;
+
+        TOBJECT(newUserPeer, TLType::PeerUser);
+        newUserPeer["user_id"] = obj["from_id"];
+        obj["from_id"] = newUserPeer;
+
+        TOBJECT(newChatPeer, TLType::PeerChat);
+        newChatPeer["chat_id"] = obj["chat_id"];
+        obj["peer_id"] = newChatPeer;
+
+        emit updateNewMessage(obj, obj["pts"].toInt(), obj["pts_count"].toInt());
+        break;
+    }
+    default:
+        qDebug() << "[UPD] Got an unhandled update with ID:" << QString::number((quint32) GETID(obj), 16);
         break;
     }
 }

@@ -141,4 +141,6 @@ qint64 TelegramClient::getUpdatesDifference()
     getDifference["date"] = this->updateDate;
 
     return sendMTObject<&writeTLMethodUpdatesGetDifference>(getDifference);
+
+    //TODO: handle updates.Difference
 }

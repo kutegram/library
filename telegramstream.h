@@ -69,19 +69,21 @@ typedef QVariantList TVector;
 typedef QByteArray TInt128;
 typedef QByteArray TInt256;
 
-#define TGOBJECT(name, id)  \
-    TelegramObject name;    \
+#define TOBJECT(name, id) \
+    TelegramObject name;  \
     name["_"] = id;
 
-#define TOBJECT(name, id)  \
-    TelegramObject name;    \
-    name["_"] = id;
+#define TGOBJECT(name, id) \
+    TOBJECT(name, id)
 
-#define GETID(name)         \
-    name["_"].toInt()
+#define ID_PROPERTY(name) \
+    name["_"]
 
-#define ID(name)         \
-    name["_"].toInt()
+#define ID(name) \
+    ID_PROPERTY(name).toInt()
+
+#define GETID(name) \
+    ID(name)
 
 #define INT32_BYTES 4
 #define INT64_BYTES 8
