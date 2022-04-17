@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "apivalues.h"
+#include "apivalues.default.h"
 #include "telegramsession.h"
 #include "telegramstream.h"
 #include <QTcpSocket>
