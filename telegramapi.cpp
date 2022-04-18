@@ -141,6 +141,62 @@ qint64 TelegramClient::getUpdatesDifference()
     getDifference["date"] = this->updateDate;
 
     return sendMTObject<&writeTLMethodUpdatesGetDifference>(getDifference);
+}
 
-    //TODO: handle updates.Difference
+void TelegramClient::handleUpdatesDifferenceEmpty(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLUpdatesDifference(packet, var);
+    TelegramObject state = var.toMap();
+
+    this->updateDate = qMax(this->updateDate, state["date"].toInt());
+    this->updateSeq = qMax(this->updateSeq, state["seq"].toInt());
+}
+
+void TelegramClient::handleUpdatesDifference(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLUpdatesDifference(packet, var);
+    TelegramObject state = var.toMap();
+
+    //TODO: encrypted messages! chats! users!
+
+    //TODO: should we handle new_messages?
+    TelegramVector updates = state["new_messages"].toList();
+    for (qint32 i = 0; i < updates.size(); ++i) {
+        applyUpdate(updates[i].toMap(), mtm);
+    }
+
+    updates = state["other_updates"].toList();
+    for (qint32 i = 0; i < updates.size(); ++i) {
+        applyUpdate(updates[i].toMap(), mtm);
+    }
+
+    TelegramPacket statePacket;
+    writeTLUpdatesState(statePacket, state["state"].toMap());
+    handleUpdatesState(statePacket.toByteArray(), mtm);
+}
+
+void TelegramClient::handleUpdatesDifferenceSlice(QByteArray data, qint64 mtm)
+{
+    handleUpdatesDifference(data, mtm);
+
+    getUpdatesDifference();
+}
+
+void TelegramClient::handleUpdatesDifferenceTooLong(QByteArray data, qint64 mtm)
+{
+    TelegramPacket packet(data);
+    QVariant var;
+
+    readTLUpdatesDifference(packet, var);
+    TelegramObject state = var.toMap();
+
+    this->updatePts = qMax(this->updatePts, state["pts"].toInt());
+
+    getUpdatesState();
 }

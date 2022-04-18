@@ -156,6 +156,10 @@ public slots:
     void handleUpdatesCombined(QByteArray data, qint64 mtm);
     void handleUpdates(QByteArray data, qint64 mtm);
     void handleUpdateShortSentMessage(QByteArray data, qint64 mtm);
+    void handleUpdatesDifferenceEmpty(QByteArray data, qint64 mtm);
+    void handleUpdatesDifference(QByteArray data, qint64 mtm);
+    void handleUpdatesDifferenceSlice(QByteArray data, qint64 mtm);
+    void handleUpdatesDifferenceTooLong(QByteArray data, qint64 mtm);
 
     //TODO Mutex for handleUpdates* and applyUpdate?
     void applyUpdate(TelegramObject obj, qint64 mtm);

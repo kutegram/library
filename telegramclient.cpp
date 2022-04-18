@@ -58,6 +58,10 @@ QHash<qint32, HANDLE_METHOD> getHandleMap()
     map[TLType::UpdatesCombined] = &TelegramClient::handleUpdatesCombined;
     map[TLType::Updates] = &TelegramClient::handleUpdates;
     map[TLType::UpdateShortSentMessage] = &TelegramClient::handleUpdateShortSentMessage;
+    map[TLType::UpdatesDifferenceEmpty] = &TelegramClient::handleUpdatesDifferenceEmpty;
+    map[TLType::UpdatesDifference] = &TelegramClient::handleUpdatesDifference;
+    map[TLType::UpdatesDifferenceSlice] = &TelegramClient::handleUpdatesDifferenceSlice;
+    map[TLType::UpdatesDifferenceTooLong] = &TelegramClient::handleUpdatesDifferenceTooLong;
 
     return map;
 }
