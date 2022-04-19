@@ -57,6 +57,7 @@ private:
     qint64 retryId;
 
     QHash<qint64, qint32> messagesConIds;
+    //TODO: receive responses to existing message only and cache it to session
     QHash<qint64, QByteArray> messages;
     QList<QByteArray> resendRequired;
     QList<qint64> confirm;
@@ -73,8 +74,8 @@ private:
     qint32 updatePts;
     qint32 updateQts;
 
-    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj, bool ignoreConfirm = false, bool binary = false);
-    qint64 sendMTPacket(QByteArray raw, bool ignoreConfirm = false, bool binary = false);
+    template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj);
+    qint64 sendMTPacket(QByteArray raw);
     void sendPlainPacket(QByteArray raw);
     //TODO use timer and floodrate
     void sendMessage(QByteArray raw);
@@ -202,13 +203,13 @@ private slots:
     void timer_timeout();
 };
 
-template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj, bool ignoreConfirm, bool binary)
+template <WRITE_METHOD W> qint64 TelegramClient::sendMTObject(QVariant obj)
 {
     if (!W) return 0;
     TelegramPacket packet;
     (*W)(packet, obj, 0);
 
-    return sendMTPacket(packet.toByteArray(), ignoreConfirm, binary);
+    return sendMTPacket(packet.toByteArray());
 }
 
 #endif // TELEGRAMCLIENT_H

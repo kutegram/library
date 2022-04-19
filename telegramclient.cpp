@@ -368,6 +368,11 @@ void TelegramClient::socket_readyRead()
         if (messageArray.length() <= 4) {
             readInt32(message, id);
             qDebug() << "Got an message error:" << id.toInt();
+
+            QList<qint64> messagesKeys = messages.keys();
+            for (qint32 i = 0; i < messagesKeys.size(); ++i)
+                qDebug() << "[DEBUG]" << messagesKeys[i] << messages.value(messagesKeys[i]).toHex();
+
             emit gotMTError(id.toInt());
             return;
         }
@@ -748,7 +753,6 @@ qint32 TelegramClient::generateSequence(bool confirmed)
     return result;
 }
 
-//TODO: Fix INPUT_METHOD_INVALID
 void TelegramClient::sendMsgsAck()
 {
     if (!apiReady()) return;
@@ -756,17 +760,19 @@ void TelegramClient::sendMsgsAck()
     while (!confirm.isEmpty()) {
         TGOBJECT(msgsAck, MTType::MsgsAck);
 
-        qDebug() << "MSGACK SENT:";
+        qDebug() << "[DEBUG] MsgsAck sent.";
         TelegramVector msgIds;
         QList<qint64> forAck = confirm.mid(0, 8192);
         for (qint32 i = 0; i < forAck.size(); ++i) {
             msgIds << forAck[i];
-            qDebug() << forAck[i];
+            //qDebug() << forAck[i];
             confirm.removeOne(forAck[i]);
         }
 
         msgsAck["msg_ids"] = msgIds;
-        sendMTObject<&writeMTMsgsAck>(msgsAck, true);
+        TelegramPacket ackPacket;
+        writeMTMsgsAck(ackPacket, msgsAck);
+        sendPlainPacket(ackPacket.toByteArray());
     }
 }
 
@@ -787,17 +793,16 @@ QByteArray TelegramClient::gzipPacket(QByteArray data)
     return packet.toByteArray();
 }
 
-qint64 TelegramClient::sendMTPacket(QByteArray raw, bool ignoreConfirm, bool binary)
+qint64 TelegramClient::sendMTPacket(QByteArray raw)
 {
     if (state < AUTHORIZED) return 0;
-    //if (!ignoreConfirm) sendMsgsAck();
 
     if (raw.isEmpty()) return 0;
 
     qDebug() << "Sending MTProto object: ( id" << qFromLittleEndian<qint32>((uchar*) raw.mid(0, 4).data()) << ")";
 
     qint32 packetConId = qFromLittleEndian<qint32>((const uchar*) raw.mid(0, 4).constData());
-    if (!binary && raw.size() > 255) raw = gzipPacket(raw);
+    if (raw.size() > 255) raw = gzipPacket(raw);
 
     qint64 messageId = getNewMessageId();
     messages.insert(messageId, raw);
