@@ -19,14 +19,14 @@ win32:include(zlib/zlib.pri)
 symbian:LIBS += -llibcrypto
 !symbian:unix:LIBS += -lcrypto
 
-exists(C:/OpenSSL-Win32) {
-    win32 {
+win32 {
+    exists(C:/OpenSSL-Win32) {
         LIBS += -LC:/OpenSSL-Win32/lib
         LIBS += -llibcrypto
         INCLUDEPATH += C:/OpenSSL-Win32/include
+    } else {
+        message(OpenSSL-Win32 1.1.1 not found. Install it from https://slproweb.com/ to C:/OpenSSL-Win32)
     }
-} else {
-    message(OpenSSL-Win32 1.1.1 not found. Install it from https://slproweb.com/ to C:/OpenSSL-Win32)
 }
 
 HEADERS += \
