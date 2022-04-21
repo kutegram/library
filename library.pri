@@ -13,21 +13,18 @@ contains(MOBILITY_CONFIG, systeminfo) {
 include(qt-json/qt-json.pri)
 include(thirdparty/thirdparty.pri)
 
-win32:include(zlib/zlib.pri)
-!symbian:unix:LIBS += -lz
-
 symbian:LIBS += -llibcrypto
-!symbian:unix:LIBS += -lcrypto
 
-win32 {
-    exists(C:/OpenSSL-Win32) {
-        LIBS += -LC:/OpenSSL-Win32/lib
-        LIBS += -llibcrypto
-        INCLUDEPATH += C:/OpenSSL-Win32/include
-    } else {
-        message(OpenSSL-Win32 1.1.1 not found. Install it from https://slproweb.com/ to C:/OpenSSL-Win32)
-    }
-}
+!symbian:!android:unix:LIBS += -lz
+!symbian:!android:unix:LIBS += -lcrypto
+
+android:LIBS += -lz
+android:LIBS += -LC:/QtAndroid/openssl -lcrypto
+android:INCLUDEPATH += C:/QtAndroid/openssl/include
+
+win32:include(zlib/zlib.pri)
+win32:LIBS += -LC:/OpenSSL-Win32/lib -llibcrypto
+win32:INCLUDEPATH += C:/OpenSSL-Win32/include
 
 HEADERS += \
     $$PWD/telegramclient.h \

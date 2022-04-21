@@ -10,8 +10,8 @@
 #include <openssl/rsa.h>
 
 DHKey::DHKey(QString publicKey, qint64 fingerprint, QString exponent) :
-    publicKey(QByteArray::fromHex(publicKey.toAscii())),
-    exponent(QByteArray::fromHex(exponent.toAscii())),
+    publicKey(QByteArray::fromHex(publicKey.toUtf8())),
+    exponent(QByteArray::fromHex(exponent.toUtf8())),
     fingerprint(fingerprint)
 {
 

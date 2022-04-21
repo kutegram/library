@@ -19,7 +19,7 @@ void TelegramClient::handleLoginToken(QByteArray data, qint64 mtm)
     readTLAuthLoginToken(packet, var);
     TelegramObject loginToken = var.toMap();
 
-    emit gotLoginToken(mtm, loginToken["expires"].toInt(), "tg://login?token=" + QString::fromAscii(loginToken["token"].toByteArray().toBase64()).replace("+", "-").replace("/", "_"));
+    emit gotLoginToken(mtm, loginToken["expires"].toInt(), "tg://login?token=" + QString::fromUtf8(loginToken["token"].toByteArray().toBase64()).replace("+", "-").replace("/", "_"));
 }
 
 void TelegramClient::handleLoginTokenSuccess(QByteArray data, qint64 mtm)
