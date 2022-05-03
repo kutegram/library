@@ -94,12 +94,6 @@ typedef QByteArray TInt256;
 #define BOOL_TRUE -1720552011
 #define BOOL_FALSE -1132882121
 
-QVariant getPeerId(TObject obj);
-TObject getInputPeer(TObject obj);
-TObject getInputMessage(TObject obj);
-qint32 commonPeerType(TObject peer);
-bool peersEqual(TObject peer1, TObject peer2);
-
 template <WRITE_METHOD W> QByteArray tlSerialize(QVariant obj)
 {
     TelegramPacket packet;
@@ -114,5 +108,12 @@ template <READ_METHOD R> QVariant tlDeserialize(QByteArray array)
     if (R) (*R)(packet, obj, 0);
     return obj;
 }
+
+QVariant getPeerId(TObject obj);
+TObject getInputPeer(TObject obj);
+TObject getInputMessage(TObject obj);
+qint32 commonPeerType(TObject peer);
+bool peersEqual(TObject peer1, TObject peer2);
+bool isChannel(TObject peer);
 
 #endif // TELEGRAMSTREAM_H

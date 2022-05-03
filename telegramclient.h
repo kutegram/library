@@ -15,6 +15,11 @@
 #include <QNetworkSession>
 #endif
 #include <QTimer>
+#include <QPointer>
+#include <QSqlDatabase>
+#include <QQueue>
+#include <QFuture>
+#include <QtConcurrentRun>
 
 class TelegramClient : public QObject
 {
@@ -38,11 +43,17 @@ public:
         INITED,
         LOGGED_IN
     };
-    explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");\
+    explicit TelegramClient(QObject *parent = 0, QString sessionId = "kg");
+    ~TelegramClient();
 private:
+    bool dbInit();
+    bool dbInsert(TObject obj);
+    bool dbInsert(TVector vec);
     //TODO support all MTProto service-messages.
     //TODO move users, chats, messages, MTProto message, confirm to session
-    //TODO do not handle packets recieved after reconnect
+    //TODO do not handle packets received after reconnect
+    QSqlDatabase sessionDb;
+
     TelegramSession session;
     QTcpSocket socket;
 #if QT_VERSION >= 0x040702
@@ -74,6 +85,17 @@ private:
     qint32 updatePts;
     qint32 updateQts;
 
+    QString sessionId;
+    QPointer<TelegramClient> fileClient;
+
+    /* !!! DO NOT USE ITEMS BELOW FROM MAIN CLIENT !!! */
+
+    QQueue<TObject> fileQueue;
+    TObject currentFile;
+    QFuture<void> fileFuture;
+
+    /* !!! DO NOT USE ITEMS ABOVE FROM MAIN CLIENT !!! */
+
     template <WRITE_METHOD W> qint64 sendMTObject(QVariant obj);
     qint64 sendMTPacket(QByteArray raw);
     void sendPlainPacket(QByteArray raw);
@@ -101,26 +123,30 @@ signals:
     void gotLoginToken(qint64 mtm, qint32 expires, QString tokenUrl);
     void gotSentCode(qint64 mtm, QString phone_code_hash); //TODO timeout and more params
     void gotAuthorization(qint64 mtm);
+    void gotExportAuthorization(qint64 mtm, qint64 id, QByteArray bytes);
 
     void gotDialogs(qint64 mtm, qint32 count, TVector dialogs, TVector messages, TVector chats, TVector users);
     void gotMessages(qint64 mtm, qint32 count, TVector messages, TVector chats, TVector users, qint32 offsetIdOffset, qint32 nextRate, bool inexact);
-    void gotFilePart(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
 
     void gotNewMessage(qint64 mtm, TObject msg);
-    //TODO void gotFullFile(qint64 mtm, qint32 type, qint32 mtime, QByteArray bytes);
 
     void updateNewMessage(TObject message, qint32 pts, qint32 pts_count);
     void updateEditMessage(TObject message, qint32 pts, qint32 pts_count);
     void updateDeleteMessages(TVector messages, qint32 pts, qint32 pts_count);
+
+    void fileStateChanged(TObject fileId, qint32 state, QVariant value);
+
 public slots:
     void start();
     void stop();
     void sync();
     void reset();
+
+    qint64 reconnectToDC(qint32 dcId);
+
     QByteArray message(qint64 mtm);
     qint32 messageConstructor(qint64 mtm);
 
-    //TODO: handleMsgsAck
     void handleResPQ(QByteArray data, qint64 mtm);
     void handleServerDHParamsOk(QByteArray data, qint64 mtm);
     void handleDhGenOk(QByteArray data, qint64 mtm);
@@ -162,7 +188,6 @@ public slots:
     void handleUpdatesDifferenceSlice(QByteArray data, qint64 mtm);
     void handleUpdatesDifferenceTooLong(QByteArray data, qint64 mtm);
 
-    //TODO Mutex for handleUpdates* and applyUpdate?
     void applyUpdate(TelegramObject obj, qint64 mtm);
 
     void initConnection();
@@ -179,18 +204,25 @@ public slots:
 
     qint64 pingDelayDisconnect(qint64 ping_id, qint32 delay); //TODO: handle pong
 
+    qint64 exportAuthorization(qint32 dcId);
+    qint64 importAuthorization(qint64 id, QByteArray bytes);
     qint64 exportLoginToken(); //TODO QR-code login
     qint64 sendCode(QString phone_number);
     qint64 signIn(QString phone_code, QString phone_code_hash = QString(), QString phone_number = QString());
-    qint64 getUpdatesState(); //TODO updates.state handle
-    qint64 getUpdatesDifference(); //TODO updates.difference handle
+    qint64 getUpdatesState();
+    qint64 getUpdatesDifference();
     qint64 getDialogs(qint32 offsetDate = 0, qint32 offsetId = 0, TObject offsetPeer = TObject(), qint32 limit = 40);
     qint64 getHistory(TObject peer, qint32 offsetId = 0, qint32 offsetDate = 0, qint32 addOffset = 0, qint32 limit = 40);
-    qint64 getFile(TObject location, qint32 limit = 524288, qint32 offset = 0);
-    qint64 sendMessage(TObject peer, QString message); //TODO handle result: Updates
+    qint64 sendMessage(TObject peer, QString message);
     qint64 getMessages(TVector ids);
 
-    void reconnectToDC(qint32 dcId);
+    TObject getChat(qint64 id); //TODO: users.getUsers
+    TObject getUser(qint64 id);
+
+    void requestFile(TObject fileId);
+    void processFiles();
+
+    qint64 getFile(TObject location, qint32 limit = 524288, qint32 offset = 0);
 
 private slots:
     void socket_connected();

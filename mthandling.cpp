@@ -183,11 +183,7 @@ void TelegramClient::handleConfig(QByteArray data, qint64 mtm)
     changeState(INITED);
 
     if (session.importId && !session.importBytes.isEmpty()) {
-        TGOBJECT(imp, TLType::AuthImportAuthorizationMethod);
-        imp["id"] = session.importId;
-        imp["bytes"] = session.importBytes;
-
-        sendMTObject<&writeTLMethodAuthImportAuthorization>(imp);
+        importAuthorization(session.importId, session.importBytes);
     }
     else if (isLoggedIn()) {
         changeState(LOGGED_IN);

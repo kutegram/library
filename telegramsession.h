@@ -36,7 +36,7 @@ struct TelegramSession
     qint32 currentPort;
     QString currentIp;
     qint32 migrateDc;
-    qint32 importId;
+    qint64 importId;
     QByteArray importBytes;
 
     QString lastPhoneNumber;

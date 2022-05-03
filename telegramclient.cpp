@@ -15,6 +15,10 @@
 #include <QDebug>
 #include <cstdlib>
 #include "systemname.h"
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDesktopServices>
+#include <QDir>
 
 typedef void (TelegramClient::*HANDLE_METHOD)(QByteArray, qint64);
 
@@ -70,6 +74,7 @@ QHash<qint32, HANDLE_METHOD> HANDLE_METHODS(getHandleMap());
 
 TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     QObject(parent),
+    sessionDb(QSqlDatabase::addDatabase("QSQLITE")),
     session(),
     socket(this),
     newNonce(),
@@ -80,19 +85,26 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
     confirm(),
     state(STOPPED),
     retryId(),
-    sessionFile(QSettings::IniFormat, QSettings::UserScope, "Kutegram", sessionId, this),
+    sessionFile(QDir::toNativeSeparators(QDir(QDesktopServices::storageLocation(QDesktopServices::DataLocation)).absoluteFilePath(sessionId + ".ini")), QSettings::IniFormat, this),
     readMutex(QMutex::Recursive),
     msgMutex(QMutex::Recursive),
 #if QT_VERSION >= 0x040702
-    networkSession(0),
+    networkSession(),
 #endif
     dcConfig(),
     updateDate(),
     updateSeq(),
     updatePts(),
     updateQts(),
-    timer(this)
+    timer(this),
+    sessionId(sessionId),
+    fileClient(),
+    fileQueue(),
+    currentFile(),
+    fileFuture()
 {
+    dbInit();
+
     session.deserialize(sessionFile.value("session").toMap());
 
     socket.setSocketOption(QTcpSocket::LowDelayOption, 1);
@@ -122,6 +134,11 @@ TelegramClient::TelegramClient(QObject *parent, QString sessionId) :
         networkSession->open(); //TODO network session error handling?
     }
 #endif
+}
+
+TelegramClient::~TelegramClient()
+{
+    sessionDb.close();
 }
 
 void TelegramClient::timer_timeout()
@@ -204,7 +221,7 @@ qint64 TelegramClient::userId()
 
 bool TelegramClient::isOpened()
 {
-    return socket.isOpen();
+    return socket.isOpen() && sessionDb.isOpen();
 }
 
 qint32 TelegramClient::getState()
@@ -251,6 +268,8 @@ void TelegramClient::stop()
 
 void TelegramClient::finishDCMigration()
 {
+    stop();
+
     TelegramVector options = dcConfig["dc_options"].toList();
     QString newIp;
     qint32 newPort;
@@ -279,7 +298,7 @@ void TelegramClient::finishDCMigration()
     start();
 }
 
-void TelegramClient::reconnectToDC(qint32 dcId)
+qint64 TelegramClient::reconnectToDC(qint32 dcId)
 {
     session.migrateDc = dcId;
     sync();
@@ -287,30 +306,46 @@ void TelegramClient::reconnectToDC(qint32 dcId)
     if (!isLoggedIn()) {
         stop();
         finishDCMigration();
-        return;
+        return 0;
     }
 
+    return exportAuthorization(dcId);
+}
+
+qint64 TelegramClient::exportAuthorization(qint32 dcId)
+{
     TGOBJECT(exp, TLType::AuthExportAuthorizationMethod);
     exp["dc_id"] = dcId;
 
-    sendMTObject<&writeTLMethodAuthExportAuthorization>(exp);
+    return sendMTObject<&writeTLMethodAuthExportAuthorization>(exp);
+}
+
+qint64 TelegramClient::importAuthorization(qint64 id, QByteArray bytes)
+{
+    TGOBJECT(imp, TLType::AuthImportAuthorizationMethod);
+    imp["id"] = id;
+    imp["bytes"] = bytes;
+
+    return sendMTObject<&writeTLMethodAuthImportAuthorization>(imp);
 }
 
 void TelegramClient::handleExportedAuthorization(QByteArray data, qint64 mtm)
 {
-    if (!session.migrateDc) return;
     TelegramPacket packet(data);
     QVariant var;
 
     readTLAuthExportedAuthorization(packet, var);
     TelegramObject obj = var.toMap();
 
-    session.importId = obj["id"].toInt();
-    session.importBytes = obj["bytes"].toByteArray();
+    if (session.migrateDc) {
+        session.importId = obj["id"].toLongLong();
+        session.importBytes = obj["bytes"].toByteArray();
+        sync();
 
-    stop();
-
-    finishDCMigration();
+        finishDCMigration();
+    } else {
+        emit gotExportAuthorization(mtm, obj["id"].toLongLong(), obj["bytes"].toByteArray());
+    }
 }
 
 void TelegramClient::socket_connected()

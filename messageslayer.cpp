@@ -28,6 +28,11 @@ void TelegramClient::handleDialogs(QByteArray data, qint64 mtm)
     readTLMessagesDialogs(packet, var);
     TelegramObject obj = var.toMap();
 
+    dbInsert(obj["users"].toList());
+    dbInsert(obj["chats"].toList());
+    //dbInsert(obj["messages"].toList());
+    //dbInsert(obj["dialogs"].toList());
+
     emit gotDialogs(mtm, 0, obj["dialogs"].toList(), obj["messages"].toList(), obj["chats"].toList(), obj["users"].toList());
 }
 
@@ -38,6 +43,11 @@ void TelegramClient::handleDialogsSlice(QByteArray data, qint64 mtm)
 
     readTLMessagesDialogs(packet, var);
     TelegramObject obj = var.toMap();
+
+    dbInsert(obj["users"].toList());
+    dbInsert(obj["chats"].toList());
+    //dbInsert(obj["messages"].toList());
+    //dbInsert(obj["dialogs"].toList());
 
     emit gotDialogs(mtm, obj["count"].toInt(), obj["dialogs"].toList(), obj["messages"].toList(), obj["chats"].toList(), obj["users"].toList());
 }
@@ -63,6 +73,10 @@ void TelegramClient::handleMessages(QByteArray data, qint64 mtm)
     readTLMessagesMessages(packet, var);
     TelegramObject obj = var.toMap();
 
+    dbInsert(obj["users"].toList());
+    dbInsert(obj["chats"].toList());
+    //dbInsert(obj["messages"].toList());
+
     emit gotMessages(mtm, obj["count"].toInt(), obj["messages"].toList(), obj["chats"].toList(), obj["users"].toList(), obj["next_rate"].toInt(), obj["offset_id_offset"].toInt(), obj["inexact"].toBool());
 }
 
@@ -84,7 +98,7 @@ qint64 TelegramClient::sendMessage(TObject peer, QString message)
     sendMessage["message"] = message;
     sendMessage["random_id"] = qFromLittleEndian<qint64>((const uchar*) randomBytes(sizeof(qint64)).constData()); //TODO random id handling
 
-    return sendMTObject< &writeTLMethodMessagesSendMessage >(sendMessage);
+    return sendMTObject<&writeTLMethodMessagesSendMessage>(sendMessage);
 }
 
 qint64 TelegramClient::getMessages(TVector ids)
@@ -93,5 +107,5 @@ qint64 TelegramClient::getMessages(TVector ids)
 
     getMessages["id"] = ids;
 
-    return sendMTObject< &writeTLMethodMessagesGetMessages >(getMessages);
+    return sendMTObject<&writeTLMethodMessagesGetMessages>(getMessages);
 }

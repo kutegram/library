@@ -1,4 +1,4 @@
-QT += network
+QT += network sql
 
 load(mobilityconfig)
 contains(MOBILITY_CONFIG, systeminfo) {
@@ -49,9 +49,10 @@ SOURCES += \
     $$PWD/telegramapi.cpp \
     $$PWD/messageslayer.cpp \
     $$PWD/fileslayer.cpp \
-    $$PWD/updates.cpp \
+    $$PWD/updateslayer.cpp \
     $$PWD/qcompressor.cpp \
     $$PWD/tl.cpp \
-    $$PWD/systemname.cpp
+    $$PWD/systemname.cpp \
+    $$PWD/telegramclient_db.cpp
 
 INCLUDEPATH += $$PWD

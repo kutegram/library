@@ -93,7 +93,7 @@ TelegramSession& TelegramSession::deserialize(QVariantMap obj)
         currentDc = DC_NUMBER;
     }
     migrateDc = obj["migrateDc"].toInt();
-    importId = obj["importId"].toInt();
+    importId = obj["importId"].toLongLong();
     importBytes = obj["importBytes"].toByteArray();
     lastPhoneNumber = obj["lastPhoneNumber"].toString();
     lastPhoneCodeHash = obj["lastPhoneCodeHash"].toString();

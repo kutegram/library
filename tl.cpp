@@ -15,16 +15,16 @@ QVariant getPeerId(TObject obj)
         return obj["channel_id"];
     case InputUserEmpty:
         return 0;
-    case InputUserSelf:
-        return 0; //TODO: current account ID
+    //case InputUserSelf:
+    //    return 0; //TODO: current account ID
     case InputUser:
         return obj["user_id"];
     case InputUserFromMessage:
         return obj["user_id"];
     case InputPeerEmpty:
         return 0;
-    case InputPeerSelf:
-        return 0; //TODO: current account ID
+    //case InputPeerSelf:
+    //    return 0; //TODO: current account ID
     case InputPeerChat:
         return obj["chat_id"];
     case InputPeerUser:
@@ -58,9 +58,41 @@ QVariant getPeerId(TObject obj)
 TObject getInputPeer(TObject obj)
 {
     switch (ID(obj)) {
-    case ChatEmpty:
+    //case PeerUser:
+    //    return TObject(); //No access_hash.
+    //case PeerChannel:
+    //    return TObject(); //No access_hash.
+    //case InputUserEmpty:
+    //case InputUserSelf:
+    case InputUser:
+    {
+        TOBJECT(v, InputPeerUser);
+
+        v["user_id"] = obj["user_id"]; //TODO: current account id
+        v["access_hash"] = obj["access_hash"];
+
+        return v;
+    }
+    case InputUserFromMessage:
+    {
+        ID_PROPERTY(obj) = InputPeerUserFromMessage;
+
+        return obj;
+    }
+    //case InputPeerEmpty:
+    case InputPeerSelf:
+    case InputPeerUser:
+    case InputPeerUserFromMessage:
+    case InputPeerChat:
+    case InputPeerChannel:
+    case InputPeerChannelFromMessage:
+    {
+        return obj;
+    }
+    //case ChatEmpty:
     case Chat:
     case ChatForbidden:
+    case PeerChat:
     {
         TOBJECT(v, InputPeerChat);
 
@@ -78,8 +110,8 @@ TObject getInputPeer(TObject obj)
 
         return v;
     }
+    //case UserEmpty:
     case TLType::User:
-    case UserEmpty:
     {
         TOBJECT(v, InputPeerUser);
 
@@ -152,10 +184,28 @@ qint32 commonPeerType(TObject peer)
     case InputPeerChannel:
     case InputPeerChannelFromMessage:
         return Chat;
+    default:
+        return ID(peer);
     }
 }
 
 bool peersEqual(TObject peer1, TObject peer2)
 {
     return commonPeerType(peer1) == commonPeerType(peer2) && getPeerId(peer1) == getPeerId(peer2);
+}
+
+bool isChannel(TObject peer)
+{
+    if (commonPeerType(peer) != Chat) return false;
+
+    switch (ID(peer)) {
+    case Channel:
+    case ChannelForbidden:
+    case PeerChannel:
+    case InputPeerChannel:
+    case InputPeerChannelFromMessage:
+        return true;
+    default:
+        return false;
+    }
 }
