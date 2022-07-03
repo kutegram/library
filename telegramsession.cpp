@@ -2,6 +2,7 @@
 
 #include "crypto.h"
 #include "apivalues.h"
+#include "apivalues.default.h"
 
 AuthKey::AuthKey() :
     key(), id(), auxHash()

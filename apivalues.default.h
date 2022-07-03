@@ -1,8 +1,6 @@
 #ifndef APIVALUES_H
 #define APIVALUES_H
 
-#error "Don't use apivalues.default.h. Create a file named apivalues.h."
-
 // #define DC_IP ""
 // #define DC_PORT 0
 // #define DC_NUMBER 0
